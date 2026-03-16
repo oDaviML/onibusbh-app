@@ -1,0 +1,518 @@
+openapi: 3.1.0
+info:
+  title: API Ônibus BH
+  description: API de rastreamento de ônibus em tempo real para Belo Horizonte
+    (MG). Fornece posições de veículos, previsões de chegada e busca espacial de
+    pontos de parada.
+  license:
+    name: Apache 2.0
+    url: https://springdoc.org
+  version: v2.0.0
+servers:
+  - url: http://localhost:8080
+    description: Generated server url
+paths:
+  /api/v1/stops:
+    get:
+      tags:
+        - stop-controller
+      operationId: getStops
+      parameters:
+        - name: minLat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: minLon
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: maxLat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: maxLon
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseListStopDto"
+  /api/v1/stops/{id}/predictions:
+    get:
+      tags:
+        - stop-controller
+      operationId: getStopPredictions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: shortName
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseListPredictionResponseDto"
+  /api/v1/lines:
+    get:
+      tags:
+        - line-controller
+      operationId: searchLines
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseListLineSummaryDto"
+  /api/v1/lines/{id}/vehicles:
+    get:
+      tags:
+        - line-controller
+      operationId: getLineVehicles
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseListVehiclePositionDto"
+  /api/v1/lines/{id}/stops:
+    get:
+      tags:
+        - line-controller
+      operationId: getLineStops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: direction
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseListStopDto"
+  /api/v1/lines/{id}/shape:
+    get:
+      tags:
+        - line-controller
+      operationId: getLineShape
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: direction
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseShapeDto"
+components:
+  schemas:
+    BaseResponseListStopDto:
+      type: object
+      properties:
+        isError:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StopDto"
+    StopDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+    ArrivalPredictionDto:
+      type: object
+      properties:
+        etaMinutes:
+          type: integer
+          format: int32
+        isStale:
+          type: boolean
+    BaseResponseListPredictionResponseDto:
+      type: object
+      properties:
+        isError:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PredictionResponseDto"
+    PredictionResponseDto:
+      type: object
+      properties:
+        routeId:
+          type: string
+        shortName:
+          type: string
+        longName:
+          type: string
+        color:
+          type: string
+        headsign:
+          type: string
+        arrivals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArrivalPredictionDto"
+    BaseResponseListLineSummaryDto:
+      type: object
+      properties:
+        isError:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LineSummaryDto"
+    LineSummaryDto:
+      type: object
+      properties:
+        routeId:
+          type: string
+        shortName:
+          type: string
+        longName:
+          type: string
+        color:
+          type: string
+        textColor:
+          type: string
+        isBidirectional:
+          type: boolean
+    BaseResponseListVehiclePositionDto:
+      type: object
+      properties:
+        isError:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/VehiclePositionDto"
+    VehiclePositionDto:
+      type: object
+      properties:
+        vehicleId:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        bearing:
+          type: integer
+          format: int32
+        speed:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    BaseResponseShapeDto:
+      type: object
+      properties:
+        isError:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: "#/components/schemas/ShapeDto"
+    Coordinate:
+      type: object
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        z:
+          type: number
+          format: double
+        valid:
+          type: boolean
+        coordinate:
+          $ref: "#/components/schemas/Coordinate"
+          writeOnly: true
+        m:
+          type: number
+          format: double
+    CoordinateSequence:
+      type: object
+      properties:
+        measures:
+          type: integer
+          format: int32
+        dimension:
+          type: integer
+          format: int32
+    CoordinateSequenceFactory: {}
+    Envelope:
+      type: object
+      properties:
+        "null":
+          type: boolean
+        diameter:
+          type: number
+          format: double
+        height:
+          type: number
+          format: double
+        minX:
+          type: number
+          format: double
+        minY:
+          type: number
+          format: double
+        maxX:
+          type: number
+          format: double
+        maxY:
+          type: number
+          format: double
+        area:
+          type: number
+          format: double
+        width:
+          type: number
+          format: double
+    Geometry:
+      type: object
+      properties:
+        envelope:
+          $ref: "#/components/schemas/Geometry"
+        factory:
+          $ref: "#/components/schemas/GeometryFactory"
+        userData: {}
+        length:
+          type: number
+          format: double
+        empty:
+          type: boolean
+        valid:
+          type: boolean
+        precisionModel:
+          $ref: "#/components/schemas/PrecisionModel"
+        srid:
+          type: integer
+          format: int32
+        numGeometries:
+          type: integer
+          format: int32
+        envelopeInternal:
+          $ref: "#/components/schemas/Envelope"
+        coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        geometryType:
+          type: string
+        coordinates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coordinate"
+        numPoints:
+          type: integer
+          format: int32
+        rectangle:
+          type: boolean
+        centroid:
+          $ref: "#/components/schemas/Point"
+        interiorPoint:
+          $ref: "#/components/schemas/Point"
+        boundary:
+          $ref: "#/components/schemas/Geometry"
+        boundaryDimension:
+          type: integer
+          format: int32
+        area:
+          type: number
+          format: double
+        simple:
+          type: boolean
+        dimension:
+          type: integer
+          format: int32
+    GeometryFactory:
+      type: object
+      properties:
+        precisionModel:
+          $ref: "#/components/schemas/PrecisionModel"
+        coordinateSequenceFactory:
+          $ref: "#/components/schemas/CoordinateSequenceFactory"
+        srid:
+          type: integer
+          format: int32
+    Point:
+      type: object
+      properties:
+        envelope: {}
+        factory:
+          $ref: "#/components/schemas/GeometryFactory"
+        userData: {}
+        coordinates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coordinate"
+        empty:
+          type: boolean
+        coordinateSequence:
+          $ref: "#/components/schemas/CoordinateSequence"
+        coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        geometryType:
+          type: string
+        numPoints:
+          type: integer
+          format: int32
+        boundary:
+          $ref: "#/components/schemas/Geometry"
+        boundaryDimension:
+          type: integer
+          format: int32
+        simple:
+          type: boolean
+        dimension:
+          type: integer
+          format: int32
+        length:
+          type: number
+          format: double
+        valid:
+          type: boolean
+        precisionModel:
+          $ref: "#/components/schemas/PrecisionModel"
+        srid:
+          type: integer
+          format: int32
+        numGeometries:
+          type: integer
+          format: int32
+        envelopeInternal:
+          $ref: "#/components/schemas/Envelope"
+        rectangle:
+          type: boolean
+        centroid: {}
+        interiorPoint:
+          $ref: "#/components/schemas/Point"
+        area:
+          type: number
+          format: double
+    PrecisionModel:
+      type: object
+      properties:
+        scale:
+          type: number
+          format: double
+        type:
+          $ref: "#/components/schemas/Type"
+        floating:
+          type: boolean
+        maximumSignificantDigits:
+          type: integer
+          format: int32
+        offsetX:
+          type: number
+          format: double
+        offsetY:
+          type: number
+          format: double
+    ShapeDto:
+      type: object
+      properties:
+        shapeId:
+          type: string
+        path:
+          $ref: "#/components/schemas/Geometry"
+        totalDistance:
+          type: number
+          format: double
+    Type: {}
