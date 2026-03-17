@@ -195,6 +195,17 @@ components:
           format: int32
         isStale:
           type: boolean
+        vehicleId:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        bearing:
+          type: integer
+          format: int32
     BaseResponseListPredictionResponseDto:
       type: object
       properties:
@@ -255,6 +266,12 @@ components:
           type: string
         isBidirectional:
           type: boolean
+        stopCount:
+          type: integer
+          format: int32
+        avgTravelTime:
+          type: integer
+          format: int32
     BaseResponseListVehiclePositionDto:
       type: object
       properties:
@@ -283,9 +300,6 @@ components:
         bearing:
           type: integer
           format: int32
-        speed:
-          type: number
-          format: double
         timestamp:
           type: string
           format: date-time
@@ -375,11 +389,6 @@ components:
           type: boolean
         valid:
           type: boolean
-        precisionModel:
-          $ref: "#/components/schemas/PrecisionModel"
-        srid:
-          type: integer
-          format: int32
         numGeometries:
           type: integer
           format: int32
@@ -387,6 +396,11 @@ components:
           $ref: "#/components/schemas/Envelope"
         coordinate:
           $ref: "#/components/schemas/Coordinate"
+        precisionModel:
+          $ref: "#/components/schemas/PrecisionModel"
+        srid:
+          type: integer
+          format: int32
         geometryType:
           type: string
         coordinates:
@@ -398,6 +412,9 @@ components:
           format: int32
         rectangle:
           type: boolean
+        area:
+          type: number
+          format: double
         centroid:
           $ref: "#/components/schemas/Point"
         interiorPoint:
@@ -407,9 +424,6 @@ components:
         boundaryDimension:
           type: integer
           format: int32
-        area:
-          type: number
-          format: double
         simple:
           type: boolean
         dimension:
@@ -468,24 +482,24 @@ components:
           format: double
         valid:
           type: boolean
-        precisionModel:
-          $ref: "#/components/schemas/PrecisionModel"
-        srid:
-          type: integer
-          format: int32
         numGeometries:
           type: integer
           format: int32
         envelopeInternal:
           $ref: "#/components/schemas/Envelope"
+        precisionModel:
+          $ref: "#/components/schemas/PrecisionModel"
+        srid:
+          type: integer
+          format: int32
         rectangle:
           type: boolean
-        centroid: {}
-        interiorPoint:
-          $ref: "#/components/schemas/Point"
         area:
           type: number
           format: double
+        centroid: {}
+        interiorPoint:
+          $ref: "#/components/schemas/Point"
     PrecisionModel:
       type: object
       properties:

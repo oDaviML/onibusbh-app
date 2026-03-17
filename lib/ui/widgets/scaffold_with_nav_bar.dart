@@ -37,14 +37,33 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
     );
   }
 
+  bool _shouldHideNavBar() {
+    final location = GoRouterState.of(context).uri.toString();
+    return location.contains('/lines/details');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hideNavBar = _shouldHideNavBar();
+
     return Scaffold(
       extendBody: true,
       body: widget.navigationShell,
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: widget.navigationShell.currentIndex,
-        onTap: _onItemTapped,
+      bottomNavigationBar: AnimatedSlide(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
+        offset: hideNavBar ? const Offset(0, 1.5) : Offset.zero,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 250),
+          opacity: hideNavBar ? 0.0 : 1.0,
+          child: IgnorePointer(
+            ignoring: hideNavBar,
+            child: CustomBottomNavigationBar(
+              currentIndex: widget.navigationShell.currentIndex,
+              onTap: _onItemTapped,
+            ),
+          ),
+        ),
       ),
     );
   }

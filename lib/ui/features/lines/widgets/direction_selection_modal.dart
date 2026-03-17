@@ -5,7 +5,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/line_summary_dto.dart';
 import '../../../widgets/soft_shadow_container.dart';
 
-class DirectionSelectionModal extends StatelessWidget {
+class DirectionSelectionModal extends StatefulWidget {
   final LineSummaryDto line;
 
   const DirectionSelectionModal({super.key, required this.line});
@@ -17,6 +17,19 @@ class DirectionSelectionModal extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => DirectionSelectionModal(line: line),
     );
+  }
+
+  @override
+  State<DirectionSelectionModal> createState() =>
+      _DirectionSelectionModalState();
+}
+
+class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
+  int _selectedDirection = 0;
+
+  void _navigateToMap() {
+    Navigator.of(context).pop();
+    context.go('/lines/details', extra: widget.line);
   }
 
   @override
@@ -75,7 +88,7 @@ class DirectionSelectionModal extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  line.shortName,
+                  widget.line.shortName,
                   style: AppTypography.quicksand.copyWith(
                     color: Colors.white,
                     fontSize: 20,
@@ -97,7 +110,7 @@ class DirectionSelectionModal extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      line.longName,
+                      widget.line.longName,
                       style: AppTypography.quicksand.copyWith(
                         color: isDark ? Colors.white : AppColors.slate900,
                         fontSize: 22,
@@ -110,9 +123,8 @@ class DirectionSelectionModal extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.close, color: AppColors.slate400),
                 style: IconButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.slate800
-                      : AppColors.slate100,
+                  backgroundColor:
+                      isDark ? AppColors.slate800 : AppColors.slate100,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -122,9 +134,9 @@ class DirectionSelectionModal extends StatelessWidget {
 
           _buildDirectionOption(
             context: context,
-            title: line.destination,
+            title: widget.line.destination,
             subtitle: 'Via Avenida Afonso Pena • 24 paradas',
-            isActive: true,
+            directionIndex: 0,
           ),
           const SizedBox(height: 16),
 
@@ -132,33 +144,7 @@ class DirectionSelectionModal extends StatelessWidget {
             context: context,
             title: 'Retorno via Centro',
             subtitle: 'Via Avenida Amazonas • 22 paradas',
-            isActive: false,
-          ),
-          const SizedBox(height: 24),
-
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.go('/lines/details', extra: line);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 4,
-              shadowColor: AppColors.primary.withValues(alpha: 0.4),
-            ),
-            child: Text(
-              'Ver Rota no Mapa',
-              style: AppTypography.quicksand.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-            ),
+            directionIndex: 1,
           ),
         ],
       ),
@@ -169,12 +155,18 @@ class DirectionSelectionModal extends StatelessWidget {
     required BuildContext context,
     required String title,
     required String subtitle,
-    required bool isActive,
+    required int directionIndex,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isActive = _selectedDirection == directionIndex;
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        setState(() {
+          _selectedDirection = directionIndex;
+        });
+        _navigateToMap();
+      },
       child: SoftShadowContainer(
         padding: const EdgeInsets.all(20),
         backgroundColor: isActive
@@ -223,6 +215,11 @@ class DirectionSelectionModal extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.slate400,
+              size: 16,
             ),
           ],
         ),
