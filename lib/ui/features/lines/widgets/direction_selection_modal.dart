@@ -8,10 +8,7 @@ import '../../../widgets/soft_shadow_container.dart';
 class DirectionSelectionModal extends StatelessWidget {
   final LineSummaryDto line;
 
-  const DirectionSelectionModal({
-    super.key,
-    required this.line,
-  });
+  const DirectionSelectionModal({super.key, required this.line});
 
   static void show(BuildContext context, LineSummaryDto line) {
     showModalBottomSheet(
@@ -35,7 +32,7 @@ class DirectionSelectionModal extends StatelessWidget {
             color: Colors.black26,
             blurRadius: 20,
             offset: Offset(0, -5),
-          )
+          ),
         ],
       ),
       padding: EdgeInsets.only(
@@ -48,7 +45,6 @@ class DirectionSelectionModal extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Drag handle
           Center(
             child: Container(
               width: 48,
@@ -60,8 +56,7 @@ class DirectionSelectionModal extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
-          // Header
+
           Row(
             children: [
               Container(
@@ -72,7 +67,7 @@ class DirectionSelectionModal extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
+                      color: AppColors.primary.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -115,7 +110,9 @@ class DirectionSelectionModal extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.close, color: AppColors.slate400),
                 style: IconButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.slate800 : AppColors.slate100,
+                  backgroundColor: isDark
+                      ? AppColors.slate800
+                      : AppColors.slate100,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -123,7 +120,6 @@ class DirectionSelectionModal extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          // Direction 1 Options
           _buildDirectionOption(
             context: context,
             title: line.destination,
@@ -131,8 +127,7 @@ class DirectionSelectionModal extends StatelessWidget {
             isActive: true,
           ),
           const SizedBox(height: 16),
-          
-          // Direction 2 Options
+
           _buildDirectionOption(
             context: context,
             title: 'Retorno via Centro',
@@ -141,7 +136,6 @@ class DirectionSelectionModal extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Action Button
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -155,7 +149,7 @@ class DirectionSelectionModal extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               elevation: 4,
-              shadowColor: AppColors.primary.withOpacity(0.4),
+              shadowColor: AppColors.primary.withValues(alpha: 0.4),
             ),
             child: Text(
               'Ver Rota no Mapa',
@@ -183,12 +177,12 @@ class DirectionSelectionModal extends StatelessWidget {
       onTap: () {},
       child: SoftShadowContainer(
         padding: const EdgeInsets.all(20),
-        backgroundColor: isActive 
-            ? AppColors.primary.withOpacity(0.05) 
+        backgroundColor: isActive
+            ? AppColors.primary.withValues(alpha: 0.05)
             : (isDark ? AppColors.slate800 : AppColors.surfaceLight),
         border: Border.all(
-          color: isActive 
-              ? AppColors.primary.withOpacity(0.3) 
+          color: isActive
+              ? AppColors.primary.withValues(alpha: 0.3)
               : (isDark ? AppColors.slate700 : AppColors.slate200),
           width: isActive ? 2 : 1,
         ),

@@ -8,10 +8,7 @@ import 'prediction_card.dart';
 class StopDetailsDrawer extends StatelessWidget {
   final StopDto stop;
 
-  const StopDetailsDrawer({
-    super.key,
-    required this.stop,
-  });
+  const StopDetailsDrawer({super.key, required this.stop});
 
   static void show(BuildContext context, StopDto stop) {
     showModalBottomSheet(
@@ -40,12 +37,11 @@ class StopDetailsDrawer extends StatelessWidget {
             color: Colors.black26,
             blurRadius: 20,
             offset: Offset(0, -5),
-          )
+          ),
         ],
       ),
       child: Column(
         children: [
-          // Handle
           const SizedBox(height: 12),
           Container(
             width: 48,
@@ -56,8 +52,7 @@ class StopDetailsDrawer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
-          // Header
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
@@ -67,31 +62,31 @@ class StopDetailsDrawer extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Text(
-                         'DETALHES DA PARADA',
-                         style: AppTypography.nunito.copyWith(
-                           color: AppColors.primary,
-                           fontSize: 12,
-                           fontWeight: FontWeight.w800,
-                           letterSpacing: 1.5,
-                         ),
-                       ),
-                       const SizedBox(height: 4),
-                       Text(
-                         stop.name,
-                         style: AppTypography.quicksand.copyWith(
-                           fontSize: 28,
-                           fontWeight: FontWeight.w800,
-                         ),
-                       ),
-                       Text(
-                         stop.locationArea,
-                         style: AppTypography.nunito.copyWith(
-                           fontSize: 16,
-                           color: AppColors.slate500,
-                           fontWeight: FontWeight.w600,
-                         ),
-                       ),
+                      Text(
+                        'DETALHES DA PARADA',
+                        style: AppTypography.nunito.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        stop.name,
+                        style: AppTypography.quicksand.copyWith(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        stop.locationArea,
+                        style: AppTypography.nunito.copyWith(
+                          fontSize: 16,
+                          color: AppColors.slate500,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -102,10 +97,10 @@ class StopDetailsDrawer extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
-                      )
+                      ),
                     ],
                   ),
                   child: Icon(Icons.share_outlined, color: AppColors.slate900),
@@ -115,7 +110,6 @@ class StopDetailsDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Search inside drawer
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Container(
@@ -123,7 +117,9 @@ class StopDetailsDrawer extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppColors.slate800 : AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? AppColors.slate700 : AppColors.slate200),
+                border: Border.all(
+                  color: isDark ? AppColors.slate700 : AppColors.slate200,
+                ),
               ),
               child: Row(
                 children: [
@@ -133,7 +129,9 @@ class StopDetailsDrawer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: 'Filtrar linhas nesta parada...',
-                        hintStyle: AppTypography.nunito.copyWith(color: AppColors.slate400),
+                        hintStyle: AppTypography.nunito.copyWith(
+                          color: AppColors.slate400,
+                        ),
                         border: InputBorder.none,
                       ),
                     ),
@@ -144,13 +142,14 @@ class StopDetailsDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Predictions List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: mockStopPredictions.predictions.length,
               itemBuilder: (context, index) {
-                return PredictionCard(prediction: mockStopPredictions.predictions[index]);
+                return PredictionCard(
+                  prediction: mockStopPredictions.predictions[index],
+                );
               },
             ),
           ),

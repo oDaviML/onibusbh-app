@@ -23,26 +23,30 @@ class SoftShadowContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: padding ?? const EdgeInsets.all(16.0),
       margin: margin,
       decoration: BoxDecoration(
         color: backgroundColor ?? theme.colorScheme.surface,
         borderRadius: borderRadius ?? BorderRadius.circular(16),
-        border: border ?? (isDark ? Border.all(color: AppColors.slate700) : Border.all(color: AppColors.surfaceLight)),
+        border:
+            border ??
+            (isDark
+                ? Border.all(color: AppColors.slate700)
+                : Border.all(color: AppColors.surfaceLight)),
         boxShadow: [
           BoxShadow(
-             color: AppColors.softShadowColor,
-             offset: const Offset(0, 10),
-             blurRadius: 25,
-             spreadRadius: -5,
+            color: AppColors.softShadowColor,
+            offset: const Offset(0, 10),
+            blurRadius: 25,
+            spreadRadius: -5,
           ),
           BoxShadow(
-             color: AppColors.softShadowSecondaryColor,
-             offset: const Offset(0, 8),
-             blurRadius: 10,
-             spreadRadius: -6,
+            color: AppColors.softShadowSecondaryColor,
+            offset: const Offset(0, 8),
+            blurRadius: 10,
+            spreadRadius: -6,
           ),
         ],
       ),

@@ -49,6 +49,11 @@ Sempre que atuar no desenvolvimento, adote a seguinte metodologia guiada pelo co
 - **Ação:** Invocar as skills `flutter-theming-apps` e `flutter-building-layouts`.
 - **Regra:** Construa modais modulares para a Seleção de Sentido e Drawers/Accordion interativos e suaves utilizando as melhores práticas para a exibição de horários. Para animações fluídas entre a tela de lista de linhas e o mapa focado na rota, aplique conhecimentos da skill `flutter-animating-apps`.
 
+## 4. Componentização e Estilo de Código (Boas Práticas)
+- **Regra:** Siga as melhores práticas de componentização no Flutter. Extraia widgets complexos em classes menores e reutilizáveis (evite métodos que retornam widgets volumosos).
+- **Regra:** Escreva código limpo, autoexplicativo e sem duplicação.
+- **Regra:** **Não adicione comentários no código.** O código deve ser legível por si só através de bons nomes de variáveis, métodos e classes.
+
 ## 4. Estado da Aplicação e Tempo Real
 - **Ação:** Invocar `flutter-managing-state` em conjunto com `flutter-expert`.
 - **Regra:** Considere o constante fluxo de dados em endpoints rotineiros (visão de `vehicles` na linha e `predictions` na parada). O estado deve reagir corretamente a essas atualizações constantes sem recarregar layouts pesados (como o widget do mapa). Aplique os padrões de Riverpod/Bloc recomendados pela skill expert para manter a interface isolada das regras de negócio.

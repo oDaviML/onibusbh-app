@@ -44,18 +44,17 @@ class LineMapDetailsScreen extends StatelessWidget {
                 onPressed: () {},
               ),
             ),
-          )
+          ),
         ],
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Stack(
         children: [
-          // Functional Map Layer
           Positioned.fill(
             child: FlutterMap(
               options: const MapOptions(
-                initialCenter: LatLng(-19.920, -43.935), // Belo Horizonte
+                initialCenter: LatLng(-19.920, -43.935),
                 initialZoom: 14.0,
                 interactionOptions: InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -63,7 +62,9 @@ class LineMapDetailsScreen extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.onibusbh',
                 ),
                 PolylineLayer(
@@ -71,11 +72,11 @@ class LineMapDetailsScreen extends StatelessWidget {
                     Polyline(
                       points: const [
                         LatLng(-19.915, -43.930),
-                        LatLng(-19.920, -43.935), 
+                        LatLng(-19.920, -43.935),
                         LatLng(-19.925, -43.940),
                         LatLng(-19.930, -43.950),
                       ],
-                      color: AppColors.primary,
+                      color: line.routeColor,
                       strokeWidth: 4.0,
                     ),
                   ],
@@ -84,7 +85,6 @@ class LineMapDetailsScreen extends StatelessWidget {
             ),
           ),
 
-          // Floating Route details overlay at top (below appbar)
           Positioned(
             top: 100,
             left: 16,
@@ -100,7 +100,7 @@ class LineMapDetailsScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -143,16 +143,22 @@ class LineMapDetailsScreen extends StatelessWidget {
             ),
           ),
 
-          // Sliding panel / bottom overlay
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 40),
+              padding: const EdgeInsets.only(
+                top: 24,
+                left: 24,
+                right: 24,
+                bottom: 40,
+              ),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -164,7 +170,6 @@ class LineMapDetailsScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Next Arrival Highlight
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -202,18 +207,25 @@ class LineMapDetailsScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.slate100,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.my_location, size: 16, color: AppColors.slate500),
+                            const Icon(
+                              Icons.my_location,
+                              size: 16,
+                              color: AppColors.slate500,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '3 paradas',
@@ -228,12 +240,13 @@ class LineMapDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Vehicles info 
+
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.slate800 : AppColors.backgroundLight,
+                      color: isDark
+                          ? AppColors.slate800
+                          : AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -252,9 +265,12 @@ class LineMapDetailsScreen extends StatelessWidget {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

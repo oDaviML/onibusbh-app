@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/models/line_summary_dto.dart';
 import '../../ui/features/lines/screens/line_directory_screen.dart';
 import '../../ui/features/lines/screens/line_map_details_screen.dart';
 import '../../ui/features/stops/screens/global_stops_map_screen.dart';
+import '../../ui/features/favorites/screens/favorites_screen.dart';
 import '../../ui/widgets/scaffold_with_nav_bar.dart';
 
 class AppRouter {
@@ -16,7 +16,6 @@ class AppRouter {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
         },
         branches: [
-          // Branch 0: Linhas (Lines Directory)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -35,7 +34,6 @@ class AppRouter {
             ],
           ),
 
-          // Branch 1: Mapa (Global Stops Map)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -45,12 +43,11 @@ class AppRouter {
             ],
           ),
 
-          // Branch 2: Favoritos (Saved - Placeholder for now)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/favorites',
-                builder: (context, state) => const Scaffold(body: Center(child: Text('Favoritos'))),
+                builder: (context, state) => const FavoritesScreen(),
               ),
             ],
           ),

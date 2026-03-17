@@ -8,11 +8,7 @@ class LineCard extends StatelessWidget {
   final LineSummaryDto line;
   final VoidCallback onTap;
 
-  const LineCard({
-    super.key,
-    required this.line,
-    required this.onTap,
-  });
+  const LineCard({super.key, required this.line, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +25,6 @@ class LineCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon / Number
             Container(
               width: 48,
               height: 48,
@@ -38,7 +33,7 @@ class LineCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     spreadRadius: 0,
                     blurRadius: 10,
                     offset: const Offset(0, 4),
@@ -56,8 +51,7 @@ class LineCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            
-            // Texts
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,27 +65,27 @@ class LineCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${line.destination} • ${line.stopsRemaining} paradas restantes',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(width: 8),
 
-            // Time & Arrow
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: line.estimatedMinutes <= 15
-                        ? AppColors.primary.withOpacity(0.1)
+                        ? AppColors.primary.withValues(alpha: 0.1)
                         : (isDark ? AppColors.slate700 : AppColors.slate100),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -120,11 +114,7 @@ class LineCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppColors.slate300,
-                  size: 24,
-                ),
+                Icon(Icons.chevron_right, color: AppColors.slate300, size: 24),
               ],
             ),
           ],

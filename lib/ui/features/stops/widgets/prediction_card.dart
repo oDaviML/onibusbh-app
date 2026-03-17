@@ -16,11 +16,12 @@ class PredictionCard extends StatelessWidget {
     return SoftShadowContainer(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      border: Border.all(color: isDark ? AppColors.slate700 : AppColors.surfaceLight),
+      border: Border.all(
+        color: isDark ? AppColors.slate700 : AppColors.surfaceLight,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Line Number
           Container(
             width: 48,
             height: 48,
@@ -29,10 +30,10 @@ class PredictionCard extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             alignment: Alignment.center,
@@ -46,8 +47,7 @@ class PredictionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          
-          // Line details
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,9 +70,9 @@ class PredictionCard extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.green.withOpacity(0.4),
+                              color: Colors.green.withValues(alpha: 0.4),
                               blurRadius: 4,
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -90,8 +90,7 @@ class PredictionCard extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Time
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -100,7 +99,9 @@ class PredictionCard extends StatelessWidget {
                 style: AppTypography.quicksand.copyWith(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: prediction.estimatedMinutes <= 5 ? AppColors.primary : (isDark ? Colors.white : AppColors.slate900),
+                  color: prediction.estimatedMinutes <= 5
+                      ? AppColors.primary
+                      : (isDark ? Colors.white : AppColors.slate900),
                   height: 1.0,
                 ),
               ),

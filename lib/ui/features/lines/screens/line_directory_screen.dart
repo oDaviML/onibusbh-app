@@ -17,7 +17,6 @@ class LineDirectoryScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Header Section
           SliverAppBar(
             pinned: true,
             expandedHeight: 140,
@@ -64,10 +63,13 @@ class LineDirectoryScreen extends StatelessWidget {
                                   color: Colors.black12,
                                   blurRadius: 4,
                                   offset: Offset(0, 2),
-                                )
+                                ),
                               ],
                             ),
-                            child: const Icon(Icons.account_circle, color: AppColors.primary),
+                            child: const Icon(
+                              Icons.account_circle,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ],
                       ),
@@ -80,7 +82,6 @@ class LineDirectoryScreen extends StatelessWidget {
             ),
           ),
 
-          // Content
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
             sliver: SliverList(
@@ -90,7 +91,9 @@ class LineDirectoryScreen extends StatelessWidget {
                   children: [
                     Text(
                       'LINHAS DISPONÍVEIS',
-                      style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 1.5),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        letterSpacing: 1.5,
+                      ),
                     ),
                     TextButton.icon(
                       onPressed: () {},
@@ -108,19 +111,18 @@ class LineDirectoryScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Map Snippet Placeholder
                 _buildMapSnippet(context),
                 const SizedBox(height: 24),
 
-                // Line Cards
-                ...mockLines.map((line) => LineCard(
-                      line: line,
-                      onTap: () {
-                        // Open Direction Modal and if confirmed go to details
-                        DirectionSelectionModal.show(context, line);
-                      },
-                    )),
-                const SizedBox(height: 80), // Padding for bottom nav
+                ...mockLines.map(
+                  (line) => LineCard(
+                    line: line,
+                    onTap: () {
+                      DirectionSelectionModal.show(context, line);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 80),
               ]),
             ),
           ),
@@ -140,9 +142,13 @@ class LineDirectoryScreen extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               Container(
-                color: AppColors.slate200, // Placeholder map background
+                color: AppColors.slate200,
                 child: Center(
-                  child: Icon(Icons.map, size: 64, color: AppColors.slate400.withOpacity(0.5)),
+                  child: Icon(
+                    Icons.map,
+                    size: 64,
+                    color: AppColors.slate400.withValues(alpha: 0.5),
+                  ),
                 ),
               ),
               Container(
@@ -151,7 +157,7 @@ class LineDirectoryScreen extends StatelessWidget {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      Colors.black.withOpacity(0.4),
+                      Colors.black.withValues(alpha: 0.4),
                       Colors.transparent,
                     ],
                   ),
@@ -171,7 +177,7 @@ class LineDirectoryScreen extends StatelessWidget {
                         Text(
                           'ÁREA ATUAL',
                           style: AppTypography.nunito.copyWith(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.5,
@@ -197,7 +203,7 @@ class LineDirectoryScreen extends StatelessWidget {
                             color: Colors.black26,
                             blurRadius: 10,
                             offset: Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                       child: const Icon(Icons.my_location, color: Colors.white),

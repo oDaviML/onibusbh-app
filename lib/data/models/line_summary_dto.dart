@@ -1,10 +1,13 @@
+import 'package:flutter/material.dart';
+
 class LineSummaryDto {
   final String id;
-  final String shortName; // e.g. "42", "10A"
-  final String longName;  // e.g. "Downtown Express"
-  final String destination; // e.g. "To Central Station"
-  final int stopsRemaining; // e.g. 12
-  final int estimatedMinutes; // e.g. 6
+  final String shortName;
+  final String longName;
+  final String destination;
+  final int stopsRemaining;
+  final int estimatedMinutes;
+  final Color routeColor;
 
   LineSummaryDto({
     required this.id,
@@ -13,13 +16,45 @@ class LineSummaryDto {
     required this.destination,
     required this.stopsRemaining,
     required this.estimatedMinutes,
+    this.routeColor = const Color(0xFF0F62FE),
   });
 }
 
-// Mock Data
 final mockLines = [
-  LineSummaryDto(id: '1', shortName: '42', longName: 'Downtown Express', destination: 'To Central Station', stopsRemaining: 12, estimatedMinutes: 6),
-  LineSummaryDto(id: '2', shortName: '10A', longName: 'Riverside Loop', destination: 'To North Plaza', stopsRemaining: 8, estimatedMinutes: 12),
-  LineSummaryDto(id: '3', shortName: 'M3', longName: 'Metro Blue Line', destination: 'To Airport T1', stopsRemaining: 4, estimatedMinutes: 2),
-  LineSummaryDto(id: '4', shortName: '88', longName: 'University Ave', destination: 'To Science Park', stopsRemaining: 15, estimatedMinutes: 18),
+  LineSummaryDto(
+    id: '1',
+    shortName: '42',
+    longName: 'Downtown Express',
+    destination: 'To Central Station',
+    stopsRemaining: 12,
+    estimatedMinutes: 6,
+    routeColor: const Color(0xFF0F62FE),
+  ),
+  LineSummaryDto(
+    id: '2',
+    shortName: '10A',
+    longName: 'Riverside Loop',
+    destination: 'To North Plaza',
+    stopsRemaining: 8,
+    estimatedMinutes: 12,
+    routeColor: const Color(0xFF198038),
+  ),
+  LineSummaryDto(
+    id: '3',
+    shortName: 'M3',
+    longName: 'Metro Blue Line',
+    destination: 'To Airport T1',
+    stopsRemaining: 4,
+    estimatedMinutes: 2,
+    routeColor: const Color(0xFFDA1E28),
+  ),
+  LineSummaryDto(
+    id: '4',
+    shortName: '88',
+    longName: 'University Ave',
+    destination: 'To Science Park',
+    stopsRemaining: 15,
+    estimatedMinutes: 18,
+    routeColor: const Color(0xFF8A3FFC),
+  ),
 ];

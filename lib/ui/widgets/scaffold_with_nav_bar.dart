@@ -5,10 +5,7 @@ import 'custom_bottom_navigation_bar.dart';
 class ScaffoldWithNavBar extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const ScaffoldWithNavBar({
-    super.key,
-    required this.navigationShell,
-  });
+  const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
   void _onItemTapped(int index) {
     navigationShell.goBranch(
@@ -20,6 +17,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: navigationShell.currentIndex,
