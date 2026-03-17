@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/line_summary_dto.dart';
+import '../../../widgets/scaffold_with_nav_bar.dart';
 import '../../../widgets/soft_shadow_container.dart';
 
 class DirectionSelectionModal extends StatefulWidget {
@@ -11,12 +12,15 @@ class DirectionSelectionModal extends StatefulWidget {
   const DirectionSelectionModal({super.key, required this.line});
 
   static void show(BuildContext context, LineSummaryDto line) {
+    ScaffoldWithNavBar.forceHide.value = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DirectionSelectionModal(line: line),
-    );
+    ).whenComplete(() {
+      ScaffoldWithNavBar.forceHide.value = false;
+    });
   }
 
   @override
@@ -25,7 +29,7 @@ class DirectionSelectionModal extends StatefulWidget {
 }
 
 class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
-  int _selectedDirection = 0;
+  int? _selectedDirection;
 
   void _navigateToMap() {
     Navigator.of(context).pop();
@@ -165,7 +169,9 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
         setState(() {
           _selectedDirection = directionIndex;
         });
-        _navigateToMap();
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (mounted) _navigateToMap();
+        });
       },
       child: SoftShadowContainer(
         padding: const EdgeInsets.all(20),
@@ -180,18 +186,6 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isActive ? AppColors.primary : AppColors.slate300,
-                  width: isActive ? 6 : 2,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

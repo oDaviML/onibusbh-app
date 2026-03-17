@@ -42,6 +42,7 @@ class _StopDetailsDrawerState extends State<StopDetailsDrawer> {
         .toList();
 
     return Container(
+      height: MediaQuery.of(context).size.height * 0.55,
       decoration: BoxDecoration(
         color: isDark ? AppColors.slate900 : AppColors.backgroundLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -54,15 +55,17 @@ class _StopDetailsDrawerState extends State<StopDetailsDrawer> {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 12),
-          Container(
-            width: 48,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.slate300,
-              borderRadius: BorderRadius.circular(10),
+          Center(
+            child: Container(
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.slate300,
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -125,10 +128,13 @@ class _StopDetailsDrawerState extends State<StopDetailsDrawer> {
           ),
           const SizedBox(height: 16),
 
-          Flexible(
+          Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              shrinkWrap: true,
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+              ),
               itemCount: predictions.length,
               itemBuilder: (context, index) {
                 final prediction = predictions[index];
@@ -140,7 +146,6 @@ class _StopDetailsDrawerState extends State<StopDetailsDrawer> {
               },
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
         ],
       ),
     );

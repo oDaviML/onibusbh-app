@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../widgets/scaffold_with_nav_bar.dart';
 import '../widgets/stop_details_drawer.dart';
 
 class GlobalStopsMapScreen extends StatefulWidget {
@@ -22,12 +23,26 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
   PredictionDto? _selectedLinePrediction;
-  bool _isDrawerOpen = false;
+  StopDto? _selectedStop;
+  late final AnimationController _drawerAnimController;
+  late final Animation<Offset> _drawerSlideAnimation;
 
   @override
   void initState() {
     super.initState();
     _initLocationService();
+    _drawerAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _drawerSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _drawerAnimController,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    ));
   }
 
   Future<void> _initLocationService() async {
@@ -71,6 +86,8 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
   void dispose() {
     _positionStream?.cancel();
     _mapController.dispose();
+    _drawerAnimController.dispose();
+    ScaffoldWithNavBar.forceHide.value = false;
     super.dispose();
   }
 
@@ -147,42 +164,38 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
 
   void _onStopTapped(StopDto stop) {
     setState(() {
-      _isDrawerOpen = true;
+      _selectedStop = stop;
       _selectedLinePrediction = null;
     });
+    ScaffoldWithNavBar.forceHide.value = true;
+    _drawerAnimController.forward();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        builder: (_, controller) => StopDetailsDrawer(
-          stop: stop,
-          onLineSelected: (prediction) {
-            setState(() {
-              _selectedLinePrediction = prediction;
-            });
-          },
-        ),
-      ),
-    ).whenComplete(() {
+  void _closeDrawer() {
+    ScaffoldWithNavBar.forceHide.value = false;
+    _drawerAnimController.reverse().then((_) {
       if (mounted) {
         setState(() {
-          _isDrawerOpen = false;
+          _selectedStop = null;
           _selectedLinePrediction = null;
         });
       }
     });
   }
 
+  void _onLineSelected(PredictionDto? prediction) {
+    setState(() {
+      _selectedLinePrediction = prediction;
+    });
+  }
+
+  bool get _isDrawerOpen => _selectedStop != null;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasSelectedLine = _selectedLinePrediction != null;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       body: Stack(
@@ -276,9 +289,22 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
             ),
           ),
 
+          // Transparent barrier over the map to dismiss the drawer on outside tap
+          if (_isDrawerOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeDrawer,
+                child: const SizedBox.expand(),
+              ),
+            ),
+
+          // Floating controls
           Positioned(
             right: 16,
-            bottom: _isDrawerOpen ? 160 : (MediaQuery.of(context).padding.bottom + 100),
+            bottom: _isDrawerOpen
+                ? (MediaQuery.of(context).size.height * 0.55 + 16)
+                : (bottomInset + 100),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -288,9 +314,8 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
                   child: AnimatedSlide(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOutCubic,
-                    offset: hasSelectedLine
-                        ? Offset.zero
-                        : const Offset(0, 0.5),
+                    offset:
+                        hasSelectedLine ? Offset.zero : const Offset(0, 0.5),
                     child: IgnorePointer(
                       ignoring: !hasSelectedLine,
                       child: _MapControlButton(
@@ -302,7 +327,10 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
                     ),
                   ),
                 ),
-                SizedBox(height: hasSelectedLine ? 12 : 0),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  child: SizedBox(height: hasSelectedLine ? 12 : 0),
+                ),
                 _MapControlButton(
                   isDark: isDark,
                   icon: Icons.my_location_rounded,
@@ -350,6 +378,25 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
               ],
             ),
           ),
+
+          // Animated in-Stack drawer
+          if (_selectedStop != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SlideTransition(
+                position: _drawerSlideAnimation,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: StopDetailsDrawer(
+                    key: ValueKey(_selectedStop!.id),
+                    stop: _selectedStop!,
+                    onLineSelected: _onLineSelected,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -409,9 +456,7 @@ class _StopMarker extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.slate800
-            : Colors.white,
+        color: isDark ? AppColors.slate800 : Colors.white,
         shape: BoxShape.circle,
         border: Border.all(
           color: AppColors.primary,

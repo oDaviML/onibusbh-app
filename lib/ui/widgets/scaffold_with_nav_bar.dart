@@ -8,6 +8,8 @@ class ScaffoldWithNavBar extends StatefulWidget {
 
   const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
+  static final forceHide = ValueNotifier<bool>(false);
+
   @override
   State<ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
 }
@@ -17,6 +19,17 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
   void initState() {
     super.initState();
     _requestInitialLocationPermission();
+    ScaffoldWithNavBar.forceHide.addListener(_onForceHideChanged);
+  }
+
+  @override
+  void dispose() {
+    ScaffoldWithNavBar.forceHide.removeListener(_onForceHideChanged);
+    super.dispose();
+  }
+
+  void _onForceHideChanged() {
+    setState(() {});
   }
 
   Future<void> _requestInitialLocationPermission() async {
@@ -38,6 +51,7 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
   }
 
   bool _shouldHideNavBar() {
+    if (ScaffoldWithNavBar.forceHide.value) return true;
     final location = GoRouterState.of(context).uri.toString();
     return location.contains('/lines/details');
   }

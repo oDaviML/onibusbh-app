@@ -96,7 +96,8 @@ class _BottomNavItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutBack,
         width: 56,
         height: 56,
         decoration: BoxDecoration(
@@ -105,7 +106,12 @@ class _BottomNavItem extends StatelessWidget {
               : Colors.transparent,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 28),
+        child: AnimatedScale(
+          scale: isActive ? 1.15 : 1.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutBack,
+          child: Icon(icon, color: color, size: 28),
+        ),
       ),
     );
   }
