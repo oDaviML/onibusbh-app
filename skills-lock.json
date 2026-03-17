@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "fcec8d5e69f914e94ad8ac999b42793fd616af044665feb4af5daa21ca7988d7"
     },
+    "flutter-animations": {
+      "source": "madteacher/mad-agents-skills",
+      "sourceType": "github",
+      "computedHash": "dcd68fd024e5631a841125645a23c9828158cd76505ba6c019c09b828c04f626"
+    },
     "flutter-architecting-apps": {
       "source": "flutter/skills",
       "sourceType": "github",
