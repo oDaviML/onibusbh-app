@@ -67,12 +67,18 @@ class LineAccordionTile extends StatelessWidget {
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      prediction.shortName,
-                      style: AppTypography.quicksand.copyWith(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Text(
+                          prediction.shortName,
+                          style: AppTypography.quicksand.copyWith(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),

@@ -44,12 +44,18 @@ class LineCard extends ConsumerWidget {
                 ],
               ),
               alignment: Alignment.center,
-              child: Text(
-                line.shortName,
-                style: AppTypography.quicksand.copyWith(
-                  color: line.routeTextColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Text(
+                    line.shortName,
+                    style: AppTypography.quicksand.copyWith(
+                      color: line.routeTextColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ),

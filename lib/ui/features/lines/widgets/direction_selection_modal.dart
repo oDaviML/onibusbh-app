@@ -102,12 +102,18 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                   ],
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  widget.line.shortName,
-                  style: AppTypography.quicksand.copyWith(
-                    color: widget.line.routeTextColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Text(
+                      widget.line.shortName,
+                      style: AppTypography.quicksand.copyWith(
+                        color: widget.line.routeTextColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ),
