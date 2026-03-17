@@ -39,14 +39,14 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _drawerSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _drawerAnimController,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    ));
+    _drawerSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _drawerAnimController,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          ),
+        );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchStopsForCurrentView();
@@ -73,25 +73,39 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
         setState(() {
           _userLocation = LatLng(pos.latitude, pos.longitude);
         });
+        try {
+          _centerOnUser();
+        } catch (_) {}
       }
 
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
-      ).listen((Position position) {
-        if (mounted) {
-          setState(() {
-            _userLocation = LatLng(position.latitude, position.longitude);
+      _positionStream =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10,
+            ),
+          ).listen((Position position) {
+            if (mounted) {
+              setState(() {
+                _userLocation = LatLng(position.latitude, position.longitude);
+              });
+            }
           });
-        }
-      });
     } catch (_) {}
   }
 
   void _fetchStopsForCurrentView() {
     final camera = _mapController.camera;
+
+    if (camera.zoom < 16.0) {
+      if (mounted && _stops.isNotEmpty) {
+        setState(() {
+          _stops = [];
+        });
+      }
+      return;
+    }
+
     final bounds = camera.visibleBounds;
     final bbox = (
       minLat: bounds.south,
@@ -100,13 +114,16 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
       maxLon: bounds.east,
     );
 
-    ref.read(stopsByBBoxProvider(bbox).future).then((stops) {
-      if (mounted) {
-        setState(() {
-          _stops = stops;
-        });
-      }
-    }).catchError((_) {});
+    ref
+        .read(stopsByBBoxProvider(bbox).future)
+        .then((stops) {
+          if (mounted) {
+            setState(() {
+              _stops = stops;
+            });
+          }
+        })
+        .catchError((_) {});
   }
 
   void _onMapMoved() {
@@ -128,18 +145,24 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
   void _animateMapTo(LatLng target, double zoom) {
     final camera = _mapController.camera;
-    final latTween =
-        Tween<double>(begin: camera.center.latitude, end: target.latitude);
-    final lngTween =
-        Tween<double>(begin: camera.center.longitude, end: target.longitude);
+    final latTween = Tween<double>(
+      begin: camera.center.latitude,
+      end: target.latitude,
+    );
+    final lngTween = Tween<double>(
+      begin: camera.center.longitude,
+      end: target.longitude,
+    );
     final zoomTween = Tween<double>(begin: camera.zoom, end: zoom);
 
     final controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    final animation =
-        CurvedAnimation(parent: controller, curve: Curves.easeInOutCubic);
+    final animation = CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeInOutCubic,
+    );
 
     controller.addListener(() {
       _mapController.move(
@@ -169,7 +192,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
   void _centerOnUser() {
     if (_userLocation != null) {
-      _animateMapTo(_userLocation!, 15.0);
+      _animateMapTo(_userLocation!, 16.0);
     }
   }
 
@@ -248,8 +271,10 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.blue,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -384,9 +409,7 @@ class _MapControlButton extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.slate900.withValues(
-              alpha: isDark ? 0.3 : 0.08,
-            ),
+            color: AppColors.slate900.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -416,10 +439,7 @@ class _StopMarker extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.slate800 : Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.primary,
-          width: 2.5,
-        ),
+        border: Border.all(color: AppColors.primary, width: 2.5),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.25),
