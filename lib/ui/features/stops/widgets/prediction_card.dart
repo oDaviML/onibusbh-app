@@ -5,13 +5,14 @@ import '../../../../data/models/prediction_response_dto.dart';
 import '../../../widgets/soft_shadow_container.dart';
 
 class PredictionCard extends StatelessWidget {
-  final PredictionDto prediction;
+  final PredictionResponseDto prediction;
 
   const PredictionCard({super.key, required this.prediction});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nextEta = prediction.nextArrivalMinutes;
 
     return SoftShadowContainer(
       margin: const EdgeInsets.only(bottom: 12),
@@ -26,11 +27,11 @@ class PredictionCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: prediction.routeColor,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: prediction.routeColor.withValues(alpha: 0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -38,7 +39,7 @@ class PredictionCard extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              prediction.lineShortName,
+              prediction.shortName,
               style: AppTypography.quicksand.copyWith(
                 color: Colors.white,
                 fontSize: 18,
@@ -53,13 +54,13 @@ class PredictionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  prediction.destination,
+                  prediction.headsign ?? prediction.longName,
                   style: AppTypography.quicksand.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (prediction.isLiveTracking)
+                if (prediction.arrivals.isNotEmpty)
                   Row(
                     children: [
                       Container(
@@ -78,7 +79,7 @@ class PredictionCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Rastreamento ao vivo',
+                        '${prediction.arrivals.length} veículo(s) rastreado(s)',
                         style: AppTypography.nunito.copyWith(
                           fontSize: 12,
                           color: AppColors.slate500,
@@ -91,30 +92,31 @@ class PredictionCard extends StatelessWidget {
             ),
           ),
 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${prediction.estimatedMinutes}',
-                style: AppTypography.quicksand.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: prediction.estimatedMinutes <= 5
-                      ? AppColors.primary
-                      : (isDark ? Colors.white : AppColors.slate900),
-                  height: 1.0,
+          if (nextEta != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$nextEta',
+                  style: AppTypography.quicksand.copyWith(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: nextEta <= 5
+                        ? AppColors.primary
+                        : (isDark ? Colors.white : AppColors.slate900),
+                    height: 1.0,
+                  ),
                 ),
-              ),
-              Text(
-                'min',
-                style: AppTypography.nunito.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.slate400,
+                Text(
+                  'min',
+                  style: AppTypography.nunito.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.slate400,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

@@ -25,8 +25,13 @@ class AppRouter {
                   GoRoute(
                     path: 'details',
                     builder: (context, state) {
-                      final line = state.extra as LineSummaryDto;
-                      return LineMapDetailsScreen(line: line);
+                      final extra = state.extra as Map<String, dynamic>;
+                      final line = extra['line'] as LineSummaryDto;
+                      final direction = extra['direction'] as int? ?? 0;
+                      return LineMapDetailsScreen(
+                        line: line,
+                        direction: direction,
+                      );
                     },
                   ),
                 ],

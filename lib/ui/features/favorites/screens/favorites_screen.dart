@@ -1,169 +1,277 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../data/models/stop_dto.dart';
+import '../../../../data/providers/favorites_providers.dart';
+import '../../lines/widgets/line_card.dart';
+import '../../lines/widgets/direction_selection_modal.dart';
+import '../../stops/widgets/stop_details_drawer.dart';
+import '../../../widgets/scaffold_with_nav_bar.dart';
 
-class FavoritesScreen extends StatefulWidget {
+class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
-  State<FavoritesScreen> createState() => _FavoritesScreenState();
+  ConsumerState<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> {
+class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedTabIndex = 0;
+  StopDto? _selectedStop;
+  late final AnimationController _drawerAnimController;
+  late final Animation<Offset> _drawerSlideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _drawerAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _drawerSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _drawerAnimController,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _drawerAnimController.dispose();
+    ScaffoldWithNavBar.forceHide.value = false;
+    super.dispose();
+  }
+
+  void _onStopTapped(StopDto stop) {
+    setState(() {
+      _selectedStop = stop;
+    });
+    ScaffoldWithNavBar.forceHide.value = true;
+    _drawerAnimController.forward();
+  }
+
+  void _closeDrawer() {
+    ScaffoldWithNavBar.forceHide.value = false;
+    _drawerAnimController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _selectedStop = null;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final favoriteLines = ref.watch(favoriteLinesProvider);
+    final favoriteStops = ref.watch(favoriteStopsProvider);
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 16.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 16.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Favoritos',
-                              style: AppTypography.display.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            Text(
-                              'Suas rotas e paradas frequentes',
-                              style: AppTypography.quicksand.copyWith(
-                                color: isDark
-                                    ? AppColors.slate400
-                                    : AppColors.slate500,
-                                fontSize: 14,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Favoritos',
+                                  style: AppTypography.display.copyWith(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                Text(
+                                  'Suas rotas e paradas frequentes',
+                                  style: AppTypography.quicksand.copyWith(
+                                    color: isDark
+                                        ? AppColors.slate400
+                                        : AppColors.slate500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.slate800.withValues(alpha: 0.5)
+                                : AppColors.slate200.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _TabButton(
+                                  label: 'Linhas Salvas',
+                                  isActive: _selectedTabIndex == 0,
+                                  onTap: () =>
+                                      setState(() => _selectedTabIndex = 0),
+                                ),
+                              ),
+                              Expanded(
+                                child: _TabButton(
+                                  label: 'Paradas Salvas',
+                                  isActive: _selectedTabIndex == 1,
+                                  onTap: () =>
+                                      setState(() => _selectedTabIndex = 1),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.slate800.withValues(alpha: 0.5)
-                            : AppColors.slate200.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _TabButton(
-                              label: 'Linhas Salvas',
-                              isActive: _selectedTabIndex == 0,
-                              onTap: () =>
-                                  setState(() => _selectedTabIndex = 0),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (_selectedTabIndex == 0) ...[
+                        _buildSectionHeader('MINHAS LINHAS DIÁRIAS'),
+                        const SizedBox(height: 16),
+                        if (favoriteLines.isEmpty)
+                          _buildEmptyState('Nenhuma linha salva')
+                        else
+                          ...favoriteLines.map((line) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: LineCard(
+                                  line: line,
+                                  onTap: () {
+                                    if (line.isBidirectional) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) =>
+                                            DirectionSelectionModal(line: line),
+                                      );
+                                    } else {
+                                      context.push('/lines/details', extra: {
+                                        'line': line,
+                                        'direction': 1,
+                                      });
+                                    }
+                                  },
+                                ),
+                              )),
+                      ] else ...[
+                        _buildSectionHeader('PARADAS FREQUENTES'),
+                        const SizedBox(height: 16),
+                        if (favoriteStops.isEmpty)
+                          _buildEmptyState('Nenhuma parada salva')
+                        else
+                          ...favoriteStops.map((stop) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: GestureDetector(
+                                  onTap: () => _onStopTapped(stop),
+                                  child: _buildStopCard(context, stop),
+                                ),
+                              )),
+                      ],
+                      const SizedBox(height: 40),
+                      if (favoriteLines.isNotEmpty || favoriteStops.isNotEmpty)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              '💡 Dica: Acesse um item para removê-lo dos favoritos',
+                              style: AppTypography.quicksand.copyWith(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                          Expanded(
-                            child: _TabButton(
-                              label: 'Paradas Salvas',
-                              isActive: _selectedTabIndex == 1,
-                              onTap: () =>
-                                  setState(() => _selectedTabIndex = 1),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      const SizedBox(height: 120),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_selectedStop != null)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeDrawer,
+                child: const SizedBox.expand(),
+              ),
+            ),
+          if (_selectedStop != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SlideTransition(
+                position: _drawerSlideAnimation,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: StopDetailsDrawer(
+                    key: ValueKey(_selectedStop!.id),
+                    stop: _selectedStop!,
+                    onLineSelected: (_) {}, // Navigation handled inside drawer if needed
+                  ),
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  if (_selectedTabIndex == 0) ...[
-                    _buildSectionHeader('MINHAS LINHAS DIÁRIAS'),
-                    const SizedBox(height: 16),
-                    _buildLineCard(
-                      number: '42',
-                      color: AppColors.primary,
-                      title: 'Trabalho',
-                      subtitle: 'Expresso Centro • Sentido Norte',
-                      status: 'Ao vivo',
-                      statusColor: Colors.green,
-                      eta: '4m',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildLineCard(
-                      number: 'M2',
-                      color: Colors.amber,
-                      title: 'Casa',
-                      subtitle: 'Linha Central do Metrô',
-                      status: 'Próximo',
-                      statusColor: AppColors.slate400,
-                      eta: '12m',
-                    ),
-                  ] else ...[
-                    _buildSectionHeader('PARADAS FREQUENTES'),
-                    const SizedBox(height: 16),
-                    _buildStopCard(
-                      icon: Icons.location_on,
-                      title: 'Academia',
-                      subtitle: 'Avenida São Marcos • ID: 8902',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStopCard(
-                      icon: Icons.directions_bus_rounded,
-                      title: 'Cafeteria',
-                      subtitle: 'Estação Central • Plataforma 4',
-                    ),
-                  ],
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        '💡 Dica: Deslize para a esquerda para excluir um item',
-                        style: AppTypography.quicksand.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 120),
-                ]),
-              ),
-            ),
-          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40.0),
+      child: Center(
+        child: Text(
+          message,
+          style: AppTypography.quicksand.copyWith(
+            color: AppColors.slate400,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -184,132 +292,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildLineCard({
-    required String number,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required String status,
-    required Color statusColor,
-    required String eta,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.slate900 : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.slate800 : AppColors.slate100,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 56,
-            width: 56,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                  blurStyle: BlurStyle.inner,
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: AppTypography.display.copyWith(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTypography.display.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: isDark ? AppColors.slate600 : AppColors.slate300,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: AppTypography.quicksand.copyWith(
-                    color: isDark ? AppColors.slate400 : AppColors.slate500,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                status,
-                style: AppTypography.quicksand.copyWith(
-                  color: statusColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                eta,
-                style: AppTypography.display.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStopCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _buildStopCard(BuildContext context, StopDto stop) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
@@ -338,8 +321,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               color: isDark ? AppColors.slate800 : AppColors.slate100,
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Icon(icon, color: AppColors.primary, size: 24),
+            child: const Center(
+              child: Icon(Icons.directions_bus_rounded,
+                  color: AppColors.primary, size: 24),
             ),
           ),
           const SizedBox(width: 16),
@@ -347,42 +331,28 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTypography.display.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: isDark ? AppColors.slate600 : AppColors.slate300,
-                    ),
-                  ],
+                Text(
+                  stop.description ?? 'Parada ${stop.id}',
+                  style: AppTypography.display.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  'ID: ${stop.id}',
                   style: AppTypography.quicksand.copyWith(
                     color: isDark ? AppColors.slate400 : AppColors.slate500,
                     fontSize: 14,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 16),
-          Icon(Icons.chevron_right, color: AppColors.slate400),
+          const Icon(Icons.chevron_right, color: AppColors.slate400),
         ],
       ),
     );
@@ -410,7 +380,7 @@ class _TabButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isActive
-              ? (isDark ? Colors.white : Colors.white)
+              ? (isDark ? AppColors.slate700 : Colors.white)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isActive
@@ -428,7 +398,7 @@ class _TabButton extends StatelessWidget {
             label,
             style: AppTypography.quicksand.copyWith(
               color: isActive
-                  ? AppColors.primary
+                  ? (isDark ? Colors.white : AppColors.primary)
                   : (isDark ? AppColors.slate400 : AppColors.slate500),
               fontSize: 14,
               fontWeight: FontWeight.w600,

@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/models/line_summary_dto.dart';
+import '../../../../data/providers/favorites_providers.dart';
 import '../../../widgets/soft_shadow_container.dart';
 
-class LineCard extends StatelessWidget {
+class LineCard extends ConsumerWidget {
   final LineSummaryDto line;
   final VoidCallback onTap;
 
   const LineCard({super.key, required this.line, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isFav = ref.watch(favoriteLinesProvider.notifier).isFavorite(line.routeId);
 
     return GestureDetector(
       onTap: onTap,
@@ -44,7 +47,7 @@ class LineCard extends StatelessWidget {
               child: Text(
                 line.shortName,
                 style: AppTypography.quicksand.copyWith(
-                  color: Colors.white,
+                  color: line.routeTextColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -67,6 +70,18 @@ class LineCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      IconButton(
+                        onPressed: () {
+                          ref.read(favoriteLinesProvider.notifier).toggleFavorite(line);
+                        },
+                        icon: Icon(
+                          isFav ? Icons.favorite : Icons.favorite_outline,
+                          color: isFav ? Colors.red : AppColors.slate400,
+                        ),
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -87,7 +102,7 @@ class LineCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${line.stopsRemaining} paradas',
+                              '${line.stopCount} paradas',
                               style: AppTypography.quicksand.copyWith(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -100,11 +115,33 @@ class LineCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    line.destination,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      if (line.isBidirectional) ...[
+                        Icon(
+                          Icons.swap_horiz_rounded,
+                          size: 14,
+                          color: AppColors.slate500,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Bidirecional',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            color: AppColors.slate500,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      if (line.avgTravelTime > 0)
+                        Text(
+                          '~${line.avgTravelTime} min',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            color: AppColors.slate500,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),

@@ -1,49 +1,49 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/line_summary_dto.dart';
+import '../../../../data/providers/line_providers.dart';
 
-class LineMapDetailsScreen extends StatefulWidget {
+class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
+  final int direction;
 
-  const LineMapDetailsScreen({super.key, required this.line});
+  const LineMapDetailsScreen({
+    super.key,
+    required this.line,
+    required this.direction,
+  });
 
   @override
-  State<LineMapDetailsScreen> createState() => _LineMapDetailsScreenState();
+  ConsumerState<LineMapDetailsScreen> createState() =>
+      _LineMapDetailsScreenState();
 }
 
-class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
+class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
-
-  final List<LatLng> _mockRoutePoints = const [
-    LatLng(-19.912, -43.941),
-    LatLng(-19.915, -43.939),
-    LatLng(-19.917, -43.935),
-    LatLng(-19.919, -43.939),
-    LatLng(-19.922, -43.938),
-    LatLng(-19.925, -43.940),
-    LatLng(-19.928, -43.935),
-    LatLng(-19.930, -43.932),
-    LatLng(-19.932, -43.938),
-  ];
-
-  final List<_MockBus> _mockBuses = const [
-    _MockBus(position: LatLng(-19.913, -43.940), bearing: 135.0),
-    _MockBus(position: LatLng(-19.920, -43.937), bearing: 200.0),
-    _MockBus(position: LatLng(-19.928, -43.934), bearing: 310.0),
-  ];
+  Timer? _vehicleRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _initLocationService();
+    _startVehiclePolling();
+  }
+
+  void _startVehiclePolling() {
+    _vehicleRefreshTimer =
+        Timer.periodic(const Duration(seconds: 15), (_) {
+      ref.invalidate(lineVehiclesProvider(widget.line.routeId));
+    });
   }
 
   Future<void> _initLocationService() async {
@@ -85,6 +85,7 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
 
   @override
   void dispose() {
+    _vehicleRefreshTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     super.dispose();
@@ -131,15 +132,15 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
     _animateMapTo(camera.center, camera.zoom - 1);
   }
 
-  void _centerOnRoute() {
-    if (_mockRoutePoints.isEmpty) return;
+  void _centerOnRoute(List<LatLng> points) {
+    if (points.isEmpty) return;
 
-    double minLat = _mockRoutePoints.first.latitude;
-    double maxLat = _mockRoutePoints.first.latitude;
-    double minLng = _mockRoutePoints.first.longitude;
-    double maxLng = _mockRoutePoints.first.longitude;
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
 
-    for (var point in _mockRoutePoints) {
+    for (var point in points) {
       if (point.latitude < minLat) minLat = point.latitude;
       if (point.latitude > maxLat) maxLat = point.latitude;
       if (point.longitude < minLng) minLng = point.longitude;
@@ -163,6 +164,24 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
+    final shapeParams = (
+      lineId: widget.line.routeId,
+      direction: widget.direction,
+    );
+    final stopsParams = (
+      lineId: widget.line.routeId,
+      direction: widget.direction,
+    );
+
+    final shapeAsync = ref.watch(lineShapeProvider(shapeParams));
+    final stopsAsync = ref.watch(lineStopsProvider(stopsParams));
+    final vehiclesAsync =
+        ref.watch(lineVehiclesProvider(widget.line.routeId));
+
+    final routePoints = shapeAsync.value?.path ?? [];
+    final lineStops = stopsAsync.value ?? [];
+    final vehicles = vehiclesAsync.value ?? [];
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -184,18 +203,19 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
                   subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.onibusbh',
                 ),
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: _mockRoutePoints,
-                      color: widget.line.routeColor,
-                      strokeWidth: 5.0,
-                      borderColor:
-                          widget.line.routeColor.withValues(alpha: 0.3),
-                      borderStrokeWidth: 2.0,
-                    ),
-                  ],
-                ),
+                if (routePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: routePoints,
+                        color: widget.line.routeColor,
+                        strokeWidth: 5.0,
+                        borderColor:
+                            widget.line.routeColor.withValues(alpha: 0.3),
+                        borderStrokeWidth: 2.0,
+                      ),
+                    ],
+                  ),
                 MarkerLayer(
                   markers: [
                     if (_userLocation != null)
@@ -222,14 +242,46 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
                           ),
                         ),
                       ),
-                    ..._mockBuses.map((bus) {
+                    ...lineStops.map((stop) {
                       return Marker(
-                        point: bus.position,
+                        point: LatLng(stop.latitude, stop.longitude),
+                        width: 24,
+                        height: 24,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.slate800 : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: widget.line.routeColor,
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.line.routeColor
+                                    .withValues(alpha: 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.circle,
+                            color: widget.line.routeColor,
+                            size: 8,
+                          ),
+                        ),
+                      );
+                    }),
+                    ...vehicles.map((v) {
+                      return Marker(
+                        point: LatLng(v.latitude, v.longitude),
                         width: 56,
                         height: 56,
                         child: _BusMarker(
                           color: widget.line.routeColor,
-                          bearing: bus.bearing,
+                          bearing: v.bearing.toDouble(),
                           shortName: widget.line.shortName,
                         ),
                       );
@@ -292,7 +344,7 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
                           child: Text(
                             widget.line.shortName,
                             style: AppTypography.quicksand.copyWith(
-                              color: Colors.white,
+                              color: widget.line.routeTextColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
@@ -317,7 +369,7 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                widget.line.destination,
+                                'Sentido ${widget.direction}',
                                 style: AppTypography.nunito.copyWith(
                                   color: AppColors.slate500,
                                   fontSize: 13,
@@ -337,6 +389,53 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
             ),
           ),
 
+          if (shapeAsync.isLoading || stopsAsync.isLoading)
+            Positioned(
+              top: topPadding + 90,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.slate800.withValues(alpha: 0.9)
+                        : Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Carregando rota...',
+                        style: AppTypography.nunito.copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.slate500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           Positioned(
             right: 16,
             bottom: MediaQuery.of(context).padding.bottom + 24,
@@ -347,7 +446,7 @@ class _LineMapDetailsScreenState extends State<LineMapDetailsScreen>
                   isDark: isDark,
                   icon: Icons.route_rounded,
                   tooltip: 'Centralizar na rota',
-                  onPressed: _centerOnRoute,
+                  onPressed: () => _centerOnRoute(routePoints),
                 ),
                 const SizedBox(height: 12),
                 _MapControlButton(
@@ -445,13 +544,6 @@ class _MapControlButton extends StatelessWidget {
   }
 }
 
-class _MockBus {
-  final LatLng position;
-  final double bearing;
-
-  const _MockBus({required this.position, required this.bearing});
-}
-
 class _BusMarker extends StatelessWidget {
   final Color color;
   final double bearing;
@@ -469,7 +561,7 @@ class _BusMarker extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         Transform.rotate(
-          angle: bearing * 3.14159265 / 180,
+          angle: bearing * math.pi / 180,
           child: Align(
             alignment: Alignment.topCenter,
             child: FractionalTranslation(

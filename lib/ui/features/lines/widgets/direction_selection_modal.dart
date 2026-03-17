@@ -12,6 +12,14 @@ class DirectionSelectionModal extends StatefulWidget {
   const DirectionSelectionModal({super.key, required this.line});
 
   static void show(BuildContext context, LineSummaryDto line) {
+    if (!line.isBidirectional) {
+      context.go('/lines/details', extra: {
+        'line': line,
+        'direction': 0,
+      });
+      return;
+    }
+
     ScaffoldWithNavBar.forceHide.value = true;
     showModalBottomSheet(
       context: context,
@@ -31,9 +39,12 @@ class DirectionSelectionModal extends StatefulWidget {
 class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
   int? _selectedDirection;
 
-  void _navigateToMap() {
+  void _navigateToMap(int direction) {
     Navigator.of(context).pop();
-    context.go('/lines/details', extra: widget.line);
+    context.go('/lines/details', extra: {
+      'line': widget.line,
+      'direction': direction,
+    });
   }
 
   @override
@@ -80,11 +91,11 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: widget.line.routeColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: widget.line.routeColor.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -94,7 +105,7 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                 child: Text(
                   widget.line.shortName,
                   style: AppTypography.quicksand.copyWith(
-                    color: Colors.white,
+                    color: widget.line.routeTextColor,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -106,7 +117,7 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Selecionar Direção',
+                      'Selecionar Sentido',
                       style: AppTypography.nunito.copyWith(
                         color: AppColors.slate500,
                         fontSize: 14,
@@ -138,16 +149,16 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
 
           _buildDirectionOption(
             context: context,
-            title: widget.line.destination,
-            subtitle: 'Via Avenida Afonso Pena • 24 paradas',
+            title: 'Sentido 0 — Ida',
+            subtitle: widget.line.longName,
             directionIndex: 0,
           ),
           const SizedBox(height: 16),
 
           _buildDirectionOption(
             context: context,
-            title: 'Retorno via Centro',
-            subtitle: 'Via Avenida Amazonas • 22 paradas',
+            title: 'Sentido 1 — Volta',
+            subtitle: widget.line.longName,
             directionIndex: 1,
           ),
         ],
@@ -170,7 +181,7 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
           _selectedDirection = directionIndex;
         });
         Future.delayed(const Duration(milliseconds: 150), () {
-          if (mounted) _navigateToMap();
+          if (mounted) _navigateToMap(directionIndex);
         });
       },
       child: SoftShadowContainer(
@@ -186,6 +197,24 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
         ),
         child: Row(
           children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : (isDark ? AppColors.slate700 : AppColors.slate100),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                directionIndex == 0
+                    ? Icons.arrow_forward_rounded
+                    : Icons.arrow_back_rounded,
+                color: isActive ? AppColors.primary : AppColors.slate500,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,6 +235,8 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

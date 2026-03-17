@@ -1,60 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'line_summary_dto.g.dart';
+
+@JsonSerializable()
 class LineSummaryDto {
-  final String id;
+  final String routeId;
   final String shortName;
   final String longName;
-  final String destination;
-  final int stopsRemaining;
-  final int estimatedMinutes;
-  final Color routeColor;
+  final String? color;
+  final String? textColor;
+  final bool isBidirectional;
+  final int stopCount;
+  final int avgTravelTime;
 
-  LineSummaryDto({
-    required this.id,
+  const LineSummaryDto({
+    required this.routeId,
     required this.shortName,
     required this.longName,
-    required this.destination,
-    required this.stopsRemaining,
-    required this.estimatedMinutes,
-    this.routeColor = const Color(0xFF0F62FE),
+    this.color,
+    this.textColor,
+    this.isBidirectional = false,
+    this.stopCount = 0,
+    this.avgTravelTime = 0,
   });
-}
 
-final mockLines = [
-  LineSummaryDto(
-    id: '1',
-    shortName: '42',
-    longName: 'Downtown Express',
-    destination: 'To Central Station',
-    stopsRemaining: 12,
-    estimatedMinutes: 6,
-    routeColor: const Color(0xFF0F62FE),
-  ),
-  LineSummaryDto(
-    id: '2',
-    shortName: '10A',
-    longName: 'Riverside Loop',
-    destination: 'To North Plaza',
-    stopsRemaining: 8,
-    estimatedMinutes: 12,
-    routeColor: const Color(0xFF198038),
-  ),
-  LineSummaryDto(
-    id: '3',
-    shortName: 'M3',
-    longName: 'Metro Blue Line',
-    destination: 'To Airport T1',
-    stopsRemaining: 4,
-    estimatedMinutes: 2,
-    routeColor: const Color(0xFFDA1E28),
-  ),
-  LineSummaryDto(
-    id: '4',
-    shortName: '88',
-    longName: 'University Ave',
-    destination: 'To Science Park',
-    stopsRemaining: 15,
-    estimatedMinutes: 18,
-    routeColor: const Color(0xFF8A3FFC),
-  ),
-];
+  Color get routeColor {
+    if (color == null || color!.isEmpty) return const Color(0xFF0F62FE);
+    final hex = color!.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  Color get routeTextColor {
+    if (textColor == null || textColor!.isEmpty) return Colors.white;
+    final hex = textColor!.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  factory LineSummaryDto.fromJson(Map<String, dynamic> json) =>
+      _$LineSummaryDtoFromJson(json);
+
+  Map<String, dynamic> toJson() => _$LineSummaryDtoToJson(this);
+}

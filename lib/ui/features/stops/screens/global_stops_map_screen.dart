@@ -1,31 +1,35 @@
 import 'dart:async';
-import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
 import '../widgets/stop_details_drawer.dart';
 
-class GlobalStopsMapScreen extends StatefulWidget {
+class GlobalStopsMapScreen extends ConsumerStatefulWidget {
   const GlobalStopsMapScreen({super.key});
 
   @override
-  State<GlobalStopsMapScreen> createState() => _GlobalStopsMapScreenState();
+  ConsumerState<GlobalStopsMapScreen> createState() =>
+      _GlobalStopsMapScreenState();
 }
 
-class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
+class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
-  PredictionDto? _selectedLinePrediction;
   StopDto? _selectedStop;
   late final AnimationController _drawerAnimController;
   late final Animation<Offset> _drawerSlideAnimation;
+  List<StopDto> _stops = [];
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -43,6 +47,10 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     ));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchStopsForCurrentView();
+    });
   }
 
   Future<void> _initLocationService() async {
@@ -82,8 +90,35 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
     } catch (_) {}
   }
 
+  void _fetchStopsForCurrentView() {
+    final camera = _mapController.camera;
+    final bounds = camera.visibleBounds;
+    final bbox = (
+      minLat: bounds.south,
+      minLon: bounds.west,
+      maxLat: bounds.north,
+      maxLon: bounds.east,
+    );
+
+    ref.read(stopsByBBoxProvider(bbox).future).then((stops) {
+      if (mounted) {
+        setState(() {
+          _stops = stops;
+        });
+      }
+    }).catchError((_) {});
+  }
+
+  void _onMapMoved() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _fetchStopsForCurrentView();
+    });
+  }
+
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     _drawerAnimController.dispose();
@@ -138,34 +173,9 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
     }
   }
 
-  void _centerOnSelectedRoute() {
-    if (_selectedLinePrediction == null ||
-        _selectedLinePrediction!.routePoints.isEmpty) {
-      return;
-    }
-
-    final points = _selectedLinePrediction!.routePoints;
-    double minLat = points.first.latitude;
-    double maxLat = points.first.latitude;
-    double minLng = points.first.longitude;
-    double maxLng = points.first.longitude;
-
-    for (var point in points) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLng) minLng = point.longitude;
-      if (point.longitude > maxLng) maxLng = point.longitude;
-    }
-
-    final centerLat = (minLat + maxLat) / 2;
-    final centerLng = (minLng + maxLng) / 2;
-    _animateMapTo(LatLng(centerLat, centerLng), 14.0);
-  }
-
   void _onStopTapped(StopDto stop) {
     setState(() {
       _selectedStop = stop;
-      _selectedLinePrediction = null;
     });
     ScaffoldWithNavBar.forceHide.value = true;
     _drawerAnimController.forward();
@@ -177,16 +187,13 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
       if (mounted) {
         setState(() {
           _selectedStop = null;
-          _selectedLinePrediction = null;
         });
       }
     });
   }
 
-  void _onLineSelected(PredictionDto? prediction) {
-    setState(() {
-      _selectedLinePrediction = prediction;
-    });
+  void _onLineSelected(PredictionResponseDto? prediction) {
+    // Left empty for now, or you can implement logic to draw line path on map
   }
 
   bool get _isDrawerOpen => _selectedStop != null;
@@ -194,7 +201,6 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasSelectedLine = _selectedLinePrediction != null;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -203,12 +209,17 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
           Positioned.fill(
             child: FlutterMap(
               mapController: _mapController,
-              options: const MapOptions(
-                initialCenter: LatLng(-19.9191, -43.9386),
+              options: MapOptions(
+                initialCenter: const LatLng(-19.9191, -43.9386),
                 initialZoom: 14.0,
-                interactionOptions: InteractionOptions(
+                interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
+                onPositionChanged: (position, hasGesture) {
+                  if (hasGesture) {
+                    _onMapMoved();
+                  }
+                },
               ),
               children: [
                 TileLayer(
@@ -217,20 +228,6 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
                   subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.onibusbh',
                 ),
-
-                if (hasSelectedLine)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: _selectedLinePrediction!.routePoints,
-                        color: _selectedLinePrediction!.routeColor,
-                        strokeWidth: 5.0,
-                        borderColor: _selectedLinePrediction!.routeColor
-                            .withValues(alpha: 0.3),
-                        borderStrokeWidth: 2.0,
-                      ),
-                    ],
-                  ),
 
                 MarkerLayer(
                   markers: [
@@ -259,9 +256,9 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
                         ),
                       ),
 
-                    ...mockStops.map((stop) {
+                    ..._stops.map((stop) {
                       return Marker(
-                        point: LatLng(stop.lat, stop.lon),
+                        point: LatLng(stop.latitude, stop.longitude),
                         width: 40,
                         height: 40,
                         child: GestureDetector(
@@ -270,26 +267,12 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
                         ),
                       );
                     }),
-
-                    if (hasSelectedLine)
-                      ..._selectedLinePrediction!.vehicles.take(3).map((v) {
-                        return Marker(
-                          point: LatLng(v.lat, v.lon),
-                          width: 56,
-                          height: 56,
-                          child: _BusMarker(
-                            color: _selectedLinePrediction!.routeColor,
-                            bearing: v.bearing,
-                          ),
-                        );
-                      }),
                   ],
                 ),
               ],
             ),
           ),
 
-          // Transparent barrier over the map to dismiss the drawer on outside tap
           if (_isDrawerOpen)
             Positioned.fill(
               child: GestureDetector(
@@ -299,7 +282,6 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
               ),
             ),
 
-          // Floating controls
           Positioned(
             right: 16,
             bottom: _isDrawerOpen
@@ -308,29 +290,6 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: hasSelectedLine ? 1.0 : 0.0,
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    offset:
-                        hasSelectedLine ? Offset.zero : const Offset(0, 0.5),
-                    child: IgnorePointer(
-                      ignoring: !hasSelectedLine,
-                      child: _MapControlButton(
-                        isDark: isDark,
-                        icon: Icons.route_rounded,
-                        tooltip: 'Centralizar na rota',
-                        onPressed: _centerOnSelectedRoute,
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  child: SizedBox(height: hasSelectedLine ? 12 : 0),
-                ),
                 _MapControlButton(
                   isDark: isDark,
                   icon: Icons.my_location_rounded,
@@ -379,7 +338,6 @@ class _GlobalStopsMapScreenState extends State<GlobalStopsMapScreen>
             ),
           ),
 
-          // Animated in-Stack drawer
           if (_selectedStop != null)
             Positioned(
               left: 0,
@@ -475,56 +433,6 @@ class _StopMarker extends StatelessWidget {
         color: AppColors.primary,
         size: 16,
       ),
-    );
-  }
-}
-
-class _BusMarker extends StatelessWidget {
-  final Color color;
-  final double bearing;
-
-  const _BusMarker({
-    required this.color,
-    required this.bearing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Transform.rotate(
-          angle: bearing * math.pi / 180,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: FractionalTranslation(
-              translation: const Offset(0.0, -0.1),
-              child: Icon(Icons.eject, color: color, size: 20),
-            ),
-          ),
-        ),
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.directions_bus,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-      ],
     );
   }
 }

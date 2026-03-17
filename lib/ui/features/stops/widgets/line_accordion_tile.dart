@@ -4,7 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 
 class LineAccordionTile extends StatelessWidget {
-  final PredictionDto prediction;
+  final PredictionResponseDto prediction;
   final bool isExpanded;
   final VoidCallback onToggle;
 
@@ -18,6 +18,7 @@ class LineAccordionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nextEta = prediction.nextArrivalMinutes;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -67,7 +68,7 @@ class LineAccordionTile extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      prediction.lineShortName,
+                      prediction.shortName,
                       style: AppTypography.quicksand.copyWith(
                         color: Colors.white,
                         fontSize: 16,
@@ -81,7 +82,7 @@ class LineAccordionTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          prediction.destination,
+                          prediction.headsign ?? prediction.longName,
                           style: AppTypography.quicksand.copyWith(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -93,7 +94,7 @@ class LineAccordionTile extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            if (prediction.isLiveTracking) ...[
+                            if (prediction.arrivals.isNotEmpty) ...[
                               Container(
                                 width: 6,
                                 height: 6,
@@ -102,7 +103,8 @@ class LineAccordionTile extends StatelessWidget {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.green.withValues(alpha: 0.4),
+                                      color:
+                                          Colors.green.withValues(alpha: 0.4),
                                       blurRadius: 4,
                                     ),
                                   ],
@@ -111,10 +113,12 @@ class LineAccordionTile extends StatelessWidget {
                               const SizedBox(width: 6),
                             ],
                             Text(
-                              '~${prediction.estimatedMinutes} min',
+                              nextEta != null
+                                  ? '~$nextEta min'
+                                  : 'Sem previsão',
                               style: AppTypography.nunito.copyWith(
                                 fontSize: 13,
-                                color: prediction.estimatedMinutes <= 5
+                                color: (nextEta ?? 99) <= 5
                                     ? AppColors.primary
                                     : AppColors.slate500,
                                 fontWeight: FontWeight.w700,
@@ -153,7 +157,7 @@ class LineAccordionTile extends StatelessWidget {
   }
 
   Widget _buildExpandedContent(BuildContext context, bool isDark) {
-    final vehicles = prediction.vehicles.take(3).toList();
+    final arrivals = prediction.arrivals.take(3).toList();
 
     return Container(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
@@ -168,7 +172,7 @@ class LineAccordionTile extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'PRÓXIMOS VEÍCULOS',
+            'PRÓXIMAS CHEGADAS',
             style: AppTypography.nunito.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -177,73 +181,115 @@ class LineAccordionTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...vehicles.asMap().entries.map((entry) {
-            final index = entry.key;
-            final vehicle = entry.value;
-            return Container(
-              margin: EdgeInsets.only(bottom: index < vehicles.length - 1 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.slate800.withValues(alpha: 0.5)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? AppColors.slate700 : AppColors.slate100,
+          if (arrivals.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Sem previsão de chegada no momento',
+                style: AppTypography.nunito.copyWith(
+                  fontSize: 13,
+                  color: AppColors.slate500,
                 ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: prediction.routeColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.directions_bus_rounded,
-                      color: prediction.routeColor,
-                      size: 16,
-                    ),
+            )
+          else
+            ...arrivals.asMap().entries.map((entry) {
+              final index = entry.key;
+              final arrival = entry.value;
+              return Container(
+                margin:
+                    EdgeInsets.only(bottom: index < arrivals.length - 1 ? 8 : 0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.slate800.withValues(alpha: 0.5)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? AppColors.slate700 : AppColors.slate100,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Veículo ${index + 1}',
-                      style: AppTypography.nunito.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : AppColors.slate700,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: prediction.routeColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.directions_bus_rounded,
+                        color: prediction.routeColor,
+                        size: 16,
                       ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: vehicle.estimatedMinutes <= 5
-                          ? AppColors.primary.withValues(alpha: 0.1)
-                          : (isDark ? AppColors.slate700 : AppColors.slate100),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${vehicle.estimatedMinutes} min',
-                      style: AppTypography.quicksand.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: vehicle.estimatedMinutes <= 5
-                            ? AppColors.primary
-                            : (isDark ? Colors.white70 : AppColors.slate700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            arrival.vehicleId ?? 'Veículo ${index + 1}',
+                            style: AppTypography.nunito.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isDark ? Colors.white70 : AppColors.slate700,
+                            ),
+                          ),
+                          if (arrival.isStale) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Estimado',
+                                style: AppTypography.nunito.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.amber.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: arrival.etaMinutes <= 5
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : (isDark
+                                ? AppColors.slate700
+                                : AppColors.slate100),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${arrival.etaMinutes} min',
+                        style: AppTypography.quicksand.copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: arrival.etaMinutes <= 5
+                              ? AppColors.primary
+                              : (isDark
+                                  ? Colors.white70
+                                  : AppColors.slate700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
