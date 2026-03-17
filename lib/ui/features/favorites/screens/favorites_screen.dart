@@ -40,7 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Favorites',
+                              'Favoritos',
                               style: AppTypography.display.copyWith(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
@@ -48,7 +48,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               ),
                             ),
                             Text(
-                              'Your frequent routes & stops',
+                              'Suas rotas e paradas frequentes',
                               style: AppTypography.quicksand.copyWith(
                                 color: isDark
                                     ? AppColors.slate400
@@ -57,23 +57,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               ),
                             ),
                           ],
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            onPressed: () {},
-                          ),
                         ),
                       ],
                     ),
@@ -90,7 +73,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         children: [
                           Expanded(
                             child: _TabButton(
-                              label: 'Saved Lines',
+                              label: 'Linhas Salvas',
                               isActive: _selectedTabIndex == 0,
                               onTap: () =>
                                   setState(() => _selectedTabIndex = 0),
@@ -98,7 +81,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           ),
                           Expanded(
                             child: _TabButton(
-                              label: 'Saved Stops',
+                              label: 'Paradas Salvas',
                               isActive: _selectedTabIndex == 1,
                               onTap: () =>
                                   setState(() => _selectedTabIndex = 1),
@@ -116,14 +99,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   if (_selectedTabIndex == 0) ...[
-                    _buildSectionHeader('MY DAILY LINES'),
+                    _buildSectionHeader('MINHAS LINHAS DIÁRIAS'),
                     const SizedBox(height: 16),
                     _buildLineCard(
                       number: '42',
                       color: AppColors.primary,
-                      title: 'Work',
-                      subtitle: 'Downtown Express • Northbound',
-                      status: 'Live',
+                      title: 'Trabalho',
+                      subtitle: 'Expresso Centro • Sentido Norte',
+                      status: 'Ao vivo',
                       statusColor: Colors.green,
                       eta: '4m',
                     ),
@@ -131,25 +114,25 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     _buildLineCard(
                       number: 'M2',
                       color: Colors.amber,
-                      title: 'Home',
-                      subtitle: 'Central Metro Line',
-                      status: 'Next',
+                      title: 'Casa',
+                      subtitle: 'Linha Central do Metrô',
+                      status: 'Próximo',
                       statusColor: AppColors.slate400,
                       eta: '12m',
                     ),
                   ] else ...[
-                    _buildSectionHeader('FREQUENT STOPS'),
+                    _buildSectionHeader('PARADAS FREQUENTES'),
                     const SizedBox(height: 16),
                     _buildStopCard(
                       icon: Icons.location_on,
-                      title: 'Gym',
-                      subtitle: 'St. Marks Avenue • ID: 8902',
+                      title: 'Academia',
+                      subtitle: 'Avenida São Marcos • ID: 8902',
                     ),
                     const SizedBox(height: 16),
                     _buildStopCard(
                       icon: Icons.directions_bus_rounded,
-                      title: 'Coffee Shop',
-                      subtitle: 'Grand Central Station • Platform 4',
+                      title: 'Cafeteria',
+                      subtitle: 'Estação Central • Plataforma 4',
                     ),
                   ],
                   const SizedBox(height: 40),
@@ -167,7 +150,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ),
                       ),
                       child: Text(
-                        '💡 Tip: Swipe left on any item to delete',
+                        '💡 Dica: Deslize para a esquerda para excluir um item',
                         style: AppTypography.quicksand.copyWith(
                           color: AppColors.primary,
                           fontSize: 14,

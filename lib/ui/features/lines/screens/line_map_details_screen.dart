@@ -18,19 +18,7 @@ class LineMapDetailsScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Material(
-            color: isDark ? AppColors.slate800 : AppColors.surfaceLight,
-            shape: const CircleBorder(),
-            elevation: 2,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              color: AppColors.slate900,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-        ),
+        automaticallyImplyLeading: false,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),

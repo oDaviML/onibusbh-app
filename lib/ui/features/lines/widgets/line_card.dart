@@ -29,11 +29,11 @@ class LineCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: line.routeColor,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: line.routeColor.withValues(alpha: 0.3),
                     spreadRadius: 0,
                     blurRadius: 10,
                     offset: const Offset(0, 4),
@@ -56,66 +56,58 @@ class LineCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    line.longName,
-                    style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          line.longName,
+                          style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.slate700 : AppColors.slate100,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 12,
+                              color: AppColors.slate500,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${line.stopsRemaining} paradas',
+                              style: AppTypography.quicksand.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.slate500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    '${line.destination} • ${line.stopsRemaining} paradas restantes',
+                    line.destination,
                     style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(width: 8),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: line.estimatedMinutes <= 15
-                        ? AppColors.primary.withValues(alpha: 0.1)
-                        : (isDark ? AppColors.slate700 : AppColors.slate100),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 12,
-                        color: line.estimatedMinutes <= 15
-                            ? AppColors.primary
-                            : AppColors.slate500,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${line.estimatedMinutes} min',
-                        style: AppTypography.quicksand.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: line.estimatedMinutes <= 15
-                              ? AppColors.primary
-                              : AppColors.slate500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Icon(Icons.chevron_right, color: AppColors.slate300, size: 24),
-              ],
             ),
           ],
         ),
