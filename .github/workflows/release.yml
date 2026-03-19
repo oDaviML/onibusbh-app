@@ -7,7 +7,10 @@ on:
 
 jobs:
   release:
+    name: Build & Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -21,35 +24,44 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.x'
           channel: stable
           cache: true
-
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > app-release.jks
-
-      - name: Get version from pubspec.yaml
-        id: version
-        run: |
-          VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/app-release.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storeFile=../app/upload-keystore.jks
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Build APK
         run: flutter build apk --release
 
       - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk onibusbh-${{ steps.version.outputs.version }}.apk
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/onibusbh-${VERSION}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: onibusbh-${{ steps.version.outputs.version }}.apk
-          generate_release_notes: true
+          name: "Onibus BH ${{ github.ref_name }}"
+          body: |
+            ## Onibus BH ${{ github.ref_name }}
+
+            ### Instalação
+            1. Baixe o arquivo `.apk` abaixo
+            2. No Android, habilite **Instalar de fontes desconhecidas** nas configurações
+            3. Abra o arquivo para instalar
+          files: build/app/outputs/flutter-apk/onibusbh-${{ github.ref_name }}.apk
           draft: false
+          prerelease: false
