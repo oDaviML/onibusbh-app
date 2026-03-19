@@ -31,14 +31,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _drawerSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _drawerAnimController,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    ));
+    _drawerSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _drawerAnimController,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          ),
+        );
   }
 
   @override
@@ -158,73 +158,48 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       if (_selectedTabIndex == 0) ...[
-                        _buildSectionHeader('MINHAS LINHAS DIÁRIAS'),
-                        const SizedBox(height: 16),
                         if (favoriteLines.isEmpty)
                           _buildEmptyState('Nenhuma linha salva')
                         else
-                          ...favoriteLines.map((line) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: LineCard(
-                                  line: line,
-                                  onTap: () {
-                                    if (line.isBidirectional) {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) =>
-                                            DirectionSelectionModal(line: line),
-                                      );
-                                    } else {
-                                      context.push('/lines/details', extra: {
-                                        'line': line,
-                                        'direction': 1,
-                                      });
-                                    }
-                                  },
-                                ),
-                              )),
+                          ...favoriteLines.map(
+                            (line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: LineCard(
+                                line: line,
+                                onTap: () {
+                                  if (line.isBidirectional) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) =>
+                                          DirectionSelectionModal(line: line),
+                                    );
+                                  } else {
+                                    context.push(
+                                      '/lines/details',
+                                      extra: {'line': line, 'direction': 1},
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
                       ] else ...[
-                        _buildSectionHeader('PARADAS FREQUENTES'),
                         const SizedBox(height: 16),
                         if (favoriteStops.isEmpty)
                           _buildEmptyState('Nenhuma parada salva')
                         else
-                          ...favoriteStops.map((stop) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: GestureDetector(
-                                  onTap: () => _onStopTapped(stop),
-                                  child: _buildStopCard(context, stop),
-                                ),
-                              )),
-                      ],
-                      const SizedBox(height: 40),
-                      if (favoriteLines.isNotEmpty || favoriteStops.isNotEmpty)
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              '💡 Dica: Acesse um item para removê-lo dos favoritos',
-                              style: AppTypography.quicksand.copyWith(
-                                color: AppColors.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                          ...favoriteStops.map(
+                            (stop) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: GestureDetector(
+                                onTap: () => _onStopTapped(stop),
+                                child: _buildStopCard(context, stop),
                               ),
                             ),
                           ),
-                        ),
-                      const SizedBox(height: 120),
+                      ],
                     ]),
                   ),
                 ),
@@ -251,7 +226,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   child: StopDetailsDrawer(
                     key: ValueKey(_selectedStop!.id),
                     stop: _selectedStop!,
-                    onLineSelected: (_) {}, // Navigation handled inside drawer if needed
+                    onLineSelected:
+                        (_) {}, // Navigation handled inside drawer if needed
                   ),
                 ),
               ),
@@ -272,21 +248,6 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: Text(
-        title,
-        style: AppTypography.quicksand.copyWith(
-          color: AppColors.slate400,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.5,
         ),
       ),
     );
@@ -322,8 +283,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Icon(Icons.directions_bus_rounded,
-                  color: AppColors.primary, size: 24),
+              child: Icon(
+                Icons.directions_bus_rounded,
+                color: AppColors.primary,
+                size: 24,
+              ),
             ),
           ),
           const SizedBox(width: 16),

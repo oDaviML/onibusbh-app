@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/line_providers.dart';
+import '../../../widgets/bus_marker.dart';
 
 class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
@@ -277,9 +277,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                     ...vehicles.map((v) {
                       return Marker(
                         point: LatLng(v.latitude, v.longitude),
-                        width: 56,
-                        height: 56,
-                        child: _BusMarker(
+                        width: 44,
+                        height: 44,
+                        child: BusMarker(
                           color: widget.line.routeColor,
                           bearing: v.bearing.toDouble(),
                           shortName: widget.line.shortName,
@@ -546,54 +546,6 @@ class _MapControlButton extends StatelessWidget {
         iconSize: 20,
         onPressed: onPressed,
       ),
-    );
-  }
-}
-
-class _BusMarker extends StatelessWidget {
-  final Color color;
-  final double bearing;
-  final String shortName;
-
-  const _BusMarker({
-    required this.color,
-    required this.bearing,
-    required this.shortName,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Transform.rotate(
-          angle: bearing * math.pi / 180,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: FractionalTranslation(
-              translation: const Offset(0.0, -0.1),
-              child: Icon(Icons.eject, color: color, size: 20),
-            ),
-          ),
-        ),
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.directions_bus, color: Colors.white, size: 18),
-        ),
-      ],
     );
   }
 }

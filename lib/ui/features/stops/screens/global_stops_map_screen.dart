@@ -9,7 +9,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/stop_providers.dart';
+import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
+import '../../../widgets/bus_marker.dart';
 import '../widgets/stop_details_drawer.dart';
 
 class GlobalStopsMapScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,8 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   late final Animation<Offset> _drawerSlideAnimation;
   List<StopDto> _stops = [];
   Timer? _debounceTimer;
+  PredictionResponseDto? _selectedLinePrediction;
+  Timer? _vehicleRefreshTimer;
 
   @override
   void initState() {
@@ -135,6 +139,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
   @override
   void dispose() {
+    _vehicleRefreshTimer?.cancel();
     _debounceTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
@@ -216,7 +221,16 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   }
 
   void _onLineSelected(PredictionResponseDto? prediction) {
-    // Left empty for now, or you can implement logic to draw line path on map
+    setState(() {
+      _selectedLinePrediction = prediction;
+    });
+
+    _vehicleRefreshTimer?.cancel();
+    if (prediction != null) {
+      _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        ref.invalidate(lineVehiclesProvider(prediction.routeId));
+      });
+    }
   }
 
   bool get _isDrawerOpen => _selectedStop != null;
@@ -225,6 +239,17 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    final selectedLineId = _selectedLinePrediction?.routeId;
+    final vehiclesAsync = selectedLineId != null 
+        ? ref.watch(lineVehiclesProvider(selectedLineId)) 
+        : null;
+    final vehicles = vehiclesAsync?.value ?? [];
+
+    final shapeAsync = selectedLineId != null
+        ? ref.watch(lineShapeProvider((lineId: selectedLineId, direction: 0)))
+        : null;
+    final shapePoints = shapeAsync?.value?.path ?? [];
 
     return Scaffold(
       body: Stack(
@@ -251,6 +276,17 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                   subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.onibusbh',
                 ),
+
+                if (shapePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: shapePoints,
+                        color: _selectedLinePrediction!.routeColor,
+                        strokeWidth: 4.0,
+                      ),
+                    ],
+                  ),
 
                 MarkerLayer(
                   markers: [
@@ -292,6 +328,20 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                         ),
                       );
                     }),
+                    
+                    if (_selectedLinePrediction != null)
+                      ...vehicles.map((v) {
+                        return Marker(
+                          point: LatLng(v.latitude, v.longitude),
+                          width: 44,
+                          height: 44,
+                          child: BusMarker(
+                            color: _selectedLinePrediction!.routeColor,
+                            bearing: v.bearing.toDouble(),
+                            shortName: _selectedLinePrediction!.shortName,
+                          ),
+                        );
+                      }),
                   ],
                 ),
               ],
