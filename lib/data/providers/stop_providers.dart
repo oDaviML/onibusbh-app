@@ -30,27 +30,48 @@ final stopPredictionsProvider = FutureProvider.autoDispose
       return repository.getStopPredictions(stopId);
     });
 
-/// Holds the current map bbox with debounce logic.
-/// Other providers can watch this to react to bbox changes.
-class _BBoxController extends Notifier<BBox?> {
+typedef MapState = ({BBox? bbox, double zoom});
+
+class _MapController extends Notifier<MapState> {
   Timer? _debounceTimer;
   BBox? _pendingBBox;
+  double _lastZoom = 0;
 
   @override
-  BBox? build() {
+  MapState build() {
     ref.onDispose(() => _debounceTimer?.cancel());
-    return null;
+    return (bbox: null, zoom: 0.0);
   }
 
-  void updateBBox(BBox? newBBox) {
+  static const double minZoomForStops = 14.0;
+
+  void update(BBox? newBBox, double zoom) {
+    _lastZoom = zoom;
+
+    if (zoom < minZoomForStops) {
+      _debounceTimer?.cancel();
+      _pendingBBox = null;
+      state = (bbox: null, zoom: zoom);
+      return;
+    }
+
     if (newBBox == null) return;
-    if (_sameBBox(state, newBBox) && _sameBBox(_pendingBBox, newBBox)) return;
+    if (_sameBBox(state.bbox, newBBox) && _sameBBox(_pendingBBox, newBBox)) {
+      return;
+    }
 
     _pendingBBox = newBBox;
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 400), () {
-      state = newBBox;
+      if (_lastZoom < minZoomForStops) return;
+      state = (bbox: newBBox, zoom: _lastZoom);
     });
+  }
+
+  void clear() {
+    _debounceTimer?.cancel();
+    _pendingBBox = null;
+    state = (bbox: null, zoom: _lastZoom);
   }
 
   bool _sameBBox(BBox? a, BBox? b) {
@@ -62,13 +83,17 @@ class _BBoxController extends Notifier<BBox?> {
   }
 }
 
-final mapBboxProvider = NotifierProvider<_BBoxController, BBox?>(
-  _BBoxController.new,
+final mapProvider = NotifierProvider<_MapController, MapState>(
+  _MapController.new,
 );
 
-/// Reactive stops list that automatically refetches when mapBbox changes.
+/// Reactive stops list that auto-refetches when map state changes.
+/// Returns [] when zoom < minZoomForStops.
 final stopsProvider = FutureProvider.autoDispose<List<StopDto>>((ref) async {
-  final bbox = ref.watch(mapBboxProvider);
+  final mapState = ref.watch(mapProvider);
+
+  if (mapState.zoom < _MapController.minZoomForStops) return [];
+  final bbox = mapState.bbox;
   if (bbox == null) return [];
 
   final repository = ref.watch(stopRepositoryProvider);

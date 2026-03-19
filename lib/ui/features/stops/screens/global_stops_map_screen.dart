@@ -99,7 +99,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   void _pushCurrentBBox() {
     if (!_isMapReady) return;
     final camera = _mapController.camera;
-    if (camera.zoom < 13.0) return;
 
     final bounds = camera.visibleBounds;
     final bbox = (
@@ -108,7 +107,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
       maxLat: bounds.north,
       maxLon: bounds.east,
     );
-    ref.read(mapBboxProvider.notifier).updateBBox(bbox);
+    ref.read(mapProvider.notifier).update(bbox, camera.zoom);
   }
 
   void _onMapReady() {
