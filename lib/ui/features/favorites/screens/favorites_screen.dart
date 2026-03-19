@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/stop_dto.dart';
+import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/favorites_providers.dart';
 import '../../lines/widgets/line_card.dart';
 import '../../lines/widgets/direction_selection_modal.dart';
 import '../../stops/widgets/stop_details_drawer.dart';
+import '../../stops/screens/stop_tracking_screen.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
 
 class FavoritesScreen extends ConsumerStatefulWidget {
@@ -65,6 +67,43 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
         });
       }
     });
+  }
+
+  void _onOpenTracking(PredictionResponseDto prediction) {
+    final stop = _selectedStop;
+    if (stop == null) return;
+
+    ScaffoldWithNavBar.forceHide.value = false;
+    _drawerAnimController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _selectedStop = null;
+        });
+      }
+    });
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 350),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            StopTrackingScreen(stop: stop, prediction: prediction),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(curvedAnimation),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -226,8 +265,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   child: StopDetailsDrawer(
                     key: ValueKey(_selectedStop!.id),
                     stop: _selectedStop!,
-                    onLineSelected:
-                        (_) {}, // Navigation handled inside drawer if needed
+                    onOpenTracking: _onOpenTracking,
                   ),
                 ),
               ),
@@ -304,7 +342,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (stop.description != null && stop.description!.isNotEmpty) ...[
+                if (stop.description != null &&
+                    stop.description!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     stop.description!,
@@ -319,7 +358,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
+          const Icon(Icons.favorite, color: Colors.red, size: 20),
+          const SizedBox(width: 4),
           const Icon(Icons.chevron_right, color: AppColors.slate400),
         ],
       ),

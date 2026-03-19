@@ -28,10 +28,13 @@ class _LineCardState extends ConsumerState<LineCard>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _heartScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartController, curve: Curves.easeInOut));
+    _heartScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _heartController, curve: Curves.easeInOut),
+        );
   }
 
   @override
@@ -100,25 +103,35 @@ class _LineCardState extends ConsumerState<LineCard>
                       Expanded(
                         child: Text(
                           widget.line.longName,
-                          style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontSize: 18,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       ScaleTransition(
                         scale: _heartScale,
-                        child: IconButton(
-                          onPressed: () {
-                            ref.read(favoriteLinesProvider.notifier).toggleFavorite(widget.line);
-                            _heartController.forward(from: 0);
-                          },
-                          icon: Icon(
-                            isFav ? Icons.favorite : Icons.favorite_outline,
-                            color: isFav ? Colors.red : AppColors.slate400,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder: (child, animation) =>
+                              ScaleTransition(scale: animation, child: child),
+                          child: IconButton(
+                            key: ValueKey(isFav),
+                            onPressed: () {
+                              ref
+                                  .read(favoriteLinesProvider.notifier)
+                                  .toggleFavorite(widget.line);
+                              _heartController.forward(from: 0);
+                            },
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_outline,
+                              color: isFav ? Colors.red : AppColors.slate400,
+                            ),
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
-                          iconSize: 20,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -128,7 +141,9 @@ class _LineCardState extends ConsumerState<LineCard>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.slate700 : AppColors.slate100,
+                          color: isDark
+                              ? AppColors.slate700
+                              : AppColors.slate100,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -191,4 +206,3 @@ class _LineCardState extends ConsumerState<LineCard>
     );
   }
 }
-

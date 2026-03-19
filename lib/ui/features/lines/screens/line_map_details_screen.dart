@@ -9,6 +9,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/bus_marker.dart';
+import '../../../widgets/user_location_marker.dart';
 
 class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
@@ -232,28 +233,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                     if (_userLocation != null)
                       Marker(
                         point: _userLocation!,
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue.withValues(alpha: 0.3),
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blue,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        width: 48,
+                        height: 48,
+                        child: const UserLocationMarker(size: 16),
                       ),
                     ...lineStops.map((stop) {
                       return Marker(
@@ -311,12 +293,15 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             left: 16,
             right: 16,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _MapControlButton(
-                  isDark: isDark,
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: () => Navigator.of(context).pop(),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _MapControlButton(
+                    isDark: isDark,
+                    icon: Icons.arrow_back_rounded,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -394,7 +379,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                               Row(
                                 children: [
                                   Text(
-                                    widget.direction == 1 ? 'Ida' : 'Volta',
+                                    widget.direction == 0 ? 'Ida' : 'Volta',
                                     style: AppTypography.nunito.copyWith(
                                       color: AppColors.slate500,
                                       fontSize: 13,
@@ -486,7 +471,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
           Positioned(
             right: 16,
-            bottom: 32,
+            bottom: MediaQuery.of(context).padding.bottom + 24,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -13,10 +13,7 @@ class DirectionSelectionModal extends StatefulWidget {
 
   static void show(BuildContext context, LineSummaryDto line) {
     if (!line.isBidirectional) {
-      context.go('/lines/details', extra: {
-        'line': line,
-        'direction': 0,
-      });
+      context.go('/lines/details', extra: {'line': line, 'direction': 0});
       return;
     }
 
@@ -41,10 +38,10 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
 
   void _navigateToMap(int direction) {
     Navigator.of(context).pop();
-    context.go('/lines/details', extra: {
-      'line': widget.line,
-      'direction': direction,
-    });
+    context.go(
+      '/lines/details',
+      extra: {'line': widget.line, 'direction': direction},
+    );
   }
 
   @override
@@ -144,8 +141,9 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
               IconButton(
                 icon: Icon(Icons.close, color: AppColors.slate400),
                 style: IconButton.styleFrom(
-                  backgroundColor:
-                      isDark ? AppColors.slate800 : AppColors.slate100,
+                  backgroundColor: isDark
+                      ? AppColors.slate800
+                      : AppColors.slate100,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -155,7 +153,7 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
 
           _buildDirectionOption(
             context: context,
-            title: 'Sentido 0 — Ida',
+            title: 'Ida',
             subtitle: widget.line.longName,
             directionIndex: 0,
           ),
@@ -163,7 +161,7 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
 
           _buildDirectionOption(
             context: context,
-            title: 'Sentido 1 — Volta',
+            title: 'Volta',
             subtitle: widget.line.longName,
             directionIndex: 1,
           ),

@@ -9,10 +9,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/stop_providers.dart';
-import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
-import '../../../widgets/bus_marker.dart';
+import '../../../widgets/user_location_marker.dart';
 import '../widgets/stop_details_drawer.dart';
+import 'stop_tracking_screen.dart';
 
 class GlobalStopsMapScreen extends ConsumerStatefulWidget {
   const GlobalStopsMapScreen({super.key});
@@ -30,15 +30,23 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   StopDto? _selectedStop;
   late final AnimationController _drawerAnimController;
   late final Animation<Offset> _drawerSlideAnimation;
+  late final AnimationController _controlsAnimController;
   List<StopDto> _stops = [];
   Timer? _debounceTimer;
-  PredictionResponseDto? _selectedLinePrediction;
-  Timer? _vehicleRefreshTimer;
+  Offset? _backdropStartPos;
+  bool _backdropMoved = false;
+  bool _hasLoadedOnce = false;
 
   @override
   void initState() {
     super.initState();
-    _initLocationService();
+    _initLocationService().then((_) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _fetchStopsForCurrentView();
+        });
+      }
+    });
     _drawerAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -51,10 +59,11 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             reverseCurve: Curves.easeInCubic,
           ),
         );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchStopsForCurrentView();
-    });
+    _controlsAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _controlsAnimController.forward();
   }
 
   Future<void> _initLocationService() async {
@@ -101,7 +110,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   void _fetchStopsForCurrentView() {
     final camera = _mapController.camera;
 
-    if (camera.zoom < 16.0) {
+    if (camera.zoom < 14.0) {
       if (mounted && _stops.isNotEmpty) {
         setState(() {
           _stops = [];
@@ -124,6 +133,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
           if (mounted) {
             setState(() {
               _stops = stops;
+              _hasLoadedOnce = true;
             });
           }
         })
@@ -137,18 +147,24 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     });
   }
 
+  void _onMapReady() {
+    if (!_hasLoadedOnce) {
+      _fetchStopsForCurrentView();
+    }
+  }
+
   @override
   void dispose() {
-    _vehicleRefreshTimer?.cancel();
     _debounceTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     _drawerAnimController.dispose();
+    _controlsAnimController.dispose();
     ScaffoldWithNavBar.forceHide.value = false;
     super.dispose();
   }
 
-  void _animateMapTo(LatLng target, double zoom) {
+  void _animateMapTo(LatLng target, double zoom, {VoidCallback? onComplete}) {
     final camera = _mapController.camera;
     final latTween = Tween<double>(
       begin: camera.center.latitude,
@@ -178,6 +194,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
+        onComplete?.call();
         controller.dispose();
       }
     });
@@ -197,7 +214,11 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
   void _centerOnUser() {
     if (_userLocation != null) {
-      _animateMapTo(_userLocation!, 16.0);
+      _animateMapTo(
+        _userLocation!,
+        16.0,
+        onComplete: _fetchStopsForCurrentView,
+      );
     }
   }
 
@@ -220,17 +241,41 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     });
   }
 
-  void _onLineSelected(PredictionResponseDto? prediction) {
-    setState(() {
-      _selectedLinePrediction = prediction;
+  void _onOpenTracking(PredictionResponseDto prediction) {
+    final stop = _selectedStop;
+    if (stop == null) return;
+
+    ScaffoldWithNavBar.forceHide.value = false;
+    _drawerAnimController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _selectedStop = null;
+        });
+      }
     });
 
-    _vehicleRefreshTimer?.cancel();
-    if (prediction != null) {
-      _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-        ref.invalidate(lineVehiclesProvider(prediction.routeId));
-      });
-    }
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 350),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            StopTrackingScreen(stop: stop, prediction: prediction),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(curvedAnimation),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   bool get _isDrawerOpen => _selectedStop != null;
@@ -239,17 +284,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
-
-    final selectedLineId = _selectedLinePrediction?.routeId;
-    final vehiclesAsync = selectedLineId != null 
-        ? ref.watch(lineVehiclesProvider(selectedLineId)) 
-        : null;
-    final vehicles = vehiclesAsync?.value ?? [];
-
-    final shapeAsync = selectedLineId != null
-        ? ref.watch(lineShapeProvider((lineId: selectedLineId, direction: 0)))
-        : null;
-    final shapePoints = shapeAsync?.value?.path ?? [];
 
     return Scaffold(
       body: Stack(
@@ -263,6 +297,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
+                onMapReady: _onMapReady,
                 onPositionChanged: (position, hasGesture) {
                   if (hasGesture) {
                     _onMapMoved();
@@ -276,72 +311,26 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                   subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.onibusbh',
                 ),
-
-                if (shapePoints.isNotEmpty)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: shapePoints,
-                        color: _selectedLinePrediction!.routeColor,
-                        strokeWidth: 4.0,
-                      ),
-                    ],
-                  ),
-
                 MarkerLayer(
                   markers: [
                     if (_userLocation != null)
                       Marker(
                         point: _userLocation!,
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue.withValues(alpha: 0.3),
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blue,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        width: 48,
+                        height: 48,
+                        child: const UserLocationMarker(size: 16),
                       ),
-
                     ..._stops.map((stop) {
                       return Marker(
                         point: LatLng(stop.latitude, stop.longitude),
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         child: GestureDetector(
                           onTap: () => _onStopTapped(stop),
                           child: _StopMarker(isDark: isDark),
                         ),
                       );
                     }),
-                    
-                    if (_selectedLinePrediction != null)
-                      ...vehicles.map((v) {
-                        return Marker(
-                          point: LatLng(v.latitude, v.longitude),
-                          width: 44,
-                          height: 44,
-                          child: BusMarker(
-                            color: _selectedLinePrediction!.routeColor,
-                            bearing: v.bearing.toDouble(),
-                            shortName: _selectedLinePrediction!.shortName,
-                          ),
-                        );
-                      }),
                   ],
                 ),
               ],
@@ -350,9 +339,27 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
           if (_isDrawerOpen)
             Positioned.fill(
-              child: GestureDetector(
+              child: Listener(
                 behavior: HitTestBehavior.translucent,
-                onTap: _closeDrawer,
+                onPointerDown: (event) {
+                  _backdropStartPos = event.position;
+                  _backdropMoved = false;
+                },
+                onPointerMove: (event) {
+                  if (_backdropStartPos != null) {
+                    final dx = event.position.dx - _backdropStartPos!.dx;
+                    final dy = event.position.dy - _backdropStartPos!.dy;
+                    if (dx * dx + dy * dy > 100) {
+                      _backdropMoved = true;
+                    }
+                  }
+                },
+                onPointerUp: (event) {
+                  if (!_backdropMoved) {
+                    _closeDrawer();
+                  }
+                  _backdropStartPos = null;
+                },
                 child: const SizedBox.expand(),
               ),
             ),
@@ -361,55 +368,69 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             right: 16,
             bottom: _isDrawerOpen
                 ? (MediaQuery.of(context).size.height * 0.55 + 16)
-                : (bottomInset + 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _MapControlButton(
-                  isDark: isDark,
-                  icon: Icons.my_location_rounded,
-                  tooltip: 'Minha localização',
-                  onPressed: _centerOnUser,
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.slate900 : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.slate900.withValues(
-                          alpha: isDark ? 0.3 : 0.08,
+                : (bottomInset + 20),
+            child: SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _controlsAnimController,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _MapControlButton(
+                    isDark: isDark,
+                    icon: Icons.my_location_rounded,
+                    tooltip: 'Minha localização',
+                    onPressed: _centerOnUser,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.slate900 : Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.slate900.withValues(
+                            alpha: isDark ? 0.3 : 0.08,
+                          ),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          color: isDark ? Colors.white : AppColors.slate900,
+                          iconSize: 20,
+                          onPressed: _zoomIn,
+                        ),
+                        Container(
+                          height: 1,
+                          width: 24,
+                          color: isDark
+                              ? AppColors.slate800
+                              : AppColors.slate200,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          color: isDark ? Colors.white : AppColors.slate900,
+                          iconSize: 20,
+                          onPressed: _zoomOut,
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        color: isDark ? Colors.white : AppColors.slate900,
-                        iconSize: 20,
-                        onPressed: _zoomIn,
-                      ),
-                      Container(
-                        height: 1,
-                        width: 24,
-                        color: isDark ? AppColors.slate800 : AppColors.slate200,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        color: isDark ? Colors.white : AppColors.slate900,
-                        iconSize: 20,
-                        onPressed: _zoomOut,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -425,7 +446,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                   child: StopDetailsDrawer(
                     key: ValueKey(_selectedStop!.id),
                     stop: _selectedStop!,
-                    onLineSelected: _onLineSelected,
+                    onOpenTracking: _onOpenTracking,
                   ),
                 ),
               ),
@@ -499,9 +520,9 @@ class _StopMarker extends StatelessWidget {
         ],
       ),
       child: Icon(
-        Icons.directions_bus_filled_rounded,
+        Icons.location_on_rounded,
         color: AppColors.primary,
-        size: 16,
+        size: 18,
       ),
     );
   }

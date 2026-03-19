@@ -10,13 +10,9 @@ import 'line_accordion_tile.dart';
 
 class StopDetailsDrawer extends ConsumerStatefulWidget {
   final StopDto stop;
-  final ValueChanged<PredictionResponseDto?> onLineSelected;
+  final ValueChanged<PredictionResponseDto>? onOpenTracking;
 
-  const StopDetailsDrawer({
-    super.key,
-    required this.stop,
-    required this.onLineSelected,
-  });
+  const StopDetailsDrawer({super.key, required this.stop, this.onOpenTracking});
 
   @override
   ConsumerState<StopDetailsDrawer> createState() => _StopDetailsDrawerState();
@@ -24,7 +20,6 @@ class StopDetailsDrawer extends ConsumerStatefulWidget {
 
 class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
     with SingleTickerProviderStateMixin {
-  String? _expandedRouteId;
   late final AnimationController _heartController;
   late final Animation<double> _heartScale;
 
@@ -35,10 +30,13 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _heartScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.5), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.5, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _heartController, curve: Curves.easeInOut));
+    _heartScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.5), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.5, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _heartController, curve: Curves.easeInOut),
+        );
   }
 
   @override
@@ -47,23 +45,10 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
     super.dispose();
   }
 
-  void _toggleLine(PredictionResponseDto prediction) {
-    setState(() {
-      if (_expandedRouteId == prediction.routeId) {
-        _expandedRouteId = null;
-        widget.onLineSelected(null);
-      } else {
-        _expandedRouteId = prediction.routeId;
-        widget.onLineSelected(prediction);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final predictionsAsync =
-        ref.watch(stopPredictionsProvider(widget.stop.id));
+    final predictionsAsync = ref.watch(stopPredictionsProvider(widget.stop.id));
     final favoriteStops = ref.watch(favoriteStopsProvider);
     final isFav = favoriteStops.any((e) => e.id == widget.stop.id);
 
@@ -112,7 +97,7 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                 ),
                 const SizedBox(height: 4),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
@@ -139,22 +124,31 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    ScaleTransition(
-                      scale: _heartScale,
-                      child: IconButton(
-                        onPressed: () {
-                          ref
-                              .read(favoriteStopsProvider.notifier)
-                              .toggleFavorite(widget.stop);
-                          _heartController.forward(from: 0);
-                        },
-                        icon: Icon(
-                          isFav ? Icons.favorite : Icons.favorite_outline,
-                          color: isFav ? Colors.red : AppColors.slate400,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: ScaleTransition(
+                        scale: _heartScale,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder: (child, animation) =>
+                              ScaleTransition(scale: animation, child: child),
+                          child: IconButton(
+                            key: ValueKey(isFav),
+                            onPressed: () {
+                              ref
+                                  .read(favoriteStopsProvider.notifier)
+                                  .toggleFavorite(widget.stop);
+                              _heartController.forward(from: 0);
+                            },
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_outline,
+                              color: isFav ? Colors.red : AppColors.slate400,
+                            ),
+                            iconSize: 28,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                        iconSize: 28,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
                       ),
                     ),
                   ],
@@ -212,20 +206,17 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                             itemCount: predictions.length,
                             itemBuilder: (context, index) {
                               final prediction = predictions[index];
-                              return LineAccordionTile(
+                              return LinePredictionTile(
                                 prediction: prediction,
-                                isExpanded:
-                                    _expandedRouteId == prediction.routeId,
-                                onToggle: () => _toggleLine(prediction),
+                                onTap: () =>
+                                    widget.onOpenTracking?.call(prediction),
                               );
                             },
                           ),
                   ),
                 ],
               ),
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -258,7 +249,8 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                       const SizedBox(height: 12),
                       TextButton.icon(
                         onPressed: () => ref.invalidate(
-                            stopPredictionsProvider(widget.stop.id)),
+                          stopPredictionsProvider(widget.stop.id),
+                        ),
                         icon: const Icon(Icons.refresh_rounded, size: 18),
                         label: const Text('Tentar novamente'),
                       ),
