@@ -296,22 +296,26 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  stop.description ?? 'Parada ${stop.id}',
+                  stop.name,
                   style: AppTypography.display.copyWith(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'ID: ${stop.id}',
-                  style: AppTypography.quicksand.copyWith(
-                    color: isDark ? AppColors.slate400 : AppColors.slate500,
-                    fontSize: 14,
+                if (stop.description != null && stop.description!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    stop.description!,
+                    style: AppTypography.quicksand.copyWith(
+                      color: isDark ? AppColors.slate400 : AppColors.slate500,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
               ],
             ),
           ),

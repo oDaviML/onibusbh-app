@@ -40,8 +40,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   }
 
   void _startVehiclePolling() {
-    _vehicleRefreshTimer =
-        Timer.periodic(const Duration(seconds: 15), (_) {
+    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       ref.invalidate(lineVehiclesProvider(widget.line.routeId));
     });
   }
@@ -68,18 +67,19 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
         });
       }
 
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
-      ).listen((Position position) {
-        if (mounted) {
-          setState(() {
-            _userLocation = LatLng(position.latitude, position.longitude);
+      _positionStream =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10,
+            ),
+          ).listen((Position position) {
+            if (mounted) {
+              setState(() {
+                _userLocation = LatLng(position.latitude, position.longitude);
+              });
+            }
           });
-        }
-      });
     } catch (_) {}
   }
 
@@ -93,18 +93,24 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
   void _animateMapTo(LatLng target, double zoom) {
     final camera = _mapController.camera;
-    final latTween =
-        Tween<double>(begin: camera.center.latitude, end: target.latitude);
-    final lngTween =
-        Tween<double>(begin: camera.center.longitude, end: target.longitude);
+    final latTween = Tween<double>(
+      begin: camera.center.latitude,
+      end: target.latitude,
+    );
+    final lngTween = Tween<double>(
+      begin: camera.center.longitude,
+      end: target.longitude,
+    );
     final zoomTween = Tween<double>(begin: camera.zoom, end: zoom);
 
     final controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    final animation =
-        CurvedAnimation(parent: controller, curve: Curves.easeInOutCubic);
+    final animation = CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeInOutCubic,
+    );
 
     controller.addListener(() {
       _mapController.move(
@@ -147,10 +153,15 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
       if (point.longitude > maxLng) maxLng = point.longitude;
     }
 
-    final centerLat = (minLat + maxLat) / 2;
-    final centerLng = (minLng + maxLng) / 2;
+    final bounds = LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
 
-    _animateMapTo(LatLng(centerLat, centerLng), 13.5);
+    final cameraFit = CameraFit.bounds(
+      bounds: bounds,
+      padding: const EdgeInsets.all(64),
+    );
+
+    final fitted = cameraFit.fit(_mapController.camera);
+    _animateMapTo(fitted.center, fitted.zoom);
   }
 
   void _centerOnUser() {
@@ -175,8 +186,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
     final shapeAsync = ref.watch(lineShapeProvider(shapeParams));
     final stopsAsync = ref.watch(lineStopsProvider(stopsParams));
-    final vehiclesAsync =
-        ref.watch(lineVehiclesProvider(widget.line.routeId));
+    final vehiclesAsync = ref.watch(lineVehiclesProvider(widget.line.routeId));
 
     final routePoints = shapeAsync.value?.path ?? [];
     final lineStops = stopsAsync.value ?? [];
@@ -210,8 +220,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                         points: routePoints,
                         color: widget.line.routeColor,
                         strokeWidth: 5.0,
-                        borderColor:
-                            widget.line.routeColor.withValues(alpha: 0.3),
+                        borderColor: widget.line.routeColor.withValues(
+                          alpha: 0.3,
+                        ),
                         borderStrokeWidth: 2.0,
                       ),
                     ],
@@ -235,8 +246,10 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.blue,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -259,8 +272,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: widget.line.routeColor
-                                    .withValues(alpha: 0.2),
+                                color: widget.line.routeColor.withValues(
+                                  alpha: 0.2,
+                                ),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -297,7 +311,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             left: 16,
             right: 16,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _MapControlButton(
                   isDark: isDark,
@@ -333,8 +347,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: widget.line.routeColor
-                                    .withValues(alpha: 0.3),
+                                color: widget.line.routeColor.withValues(
+                                  alpha: 0.3,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -344,7 +359,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                              ),
                               child: Text(
                                 widget.line.shortName,
                                 style: AppTypography.quicksand.copyWith(
@@ -374,15 +391,38 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              Text(
-                                'Sentido ${widget.direction}',
-                                style: AppTypography.nunito.copyWith(
-                                  color: AppColors.slate500,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.direction == 1 ? 'Ida' : 'Volta',
+                                    style: AppTypography.nunito.copyWith(
+                                      color: AppColors.slate500,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: widget.line.routeColor.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${vehicles.length} veículos',
+                                      style: AppTypography.nunito.copyWith(
+                                        color: widget.line.routeColor,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -403,7 +443,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.slate800.withValues(alpha: 0.9)
@@ -444,7 +486,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
           Positioned(
             right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 24,
+            bottom: 32,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -531,9 +573,7 @@ class _MapControlButton extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.slate900.withValues(
-              alpha: isDark ? 0.3 : 0.08,
-            ),
+            color: AppColors.slate900.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

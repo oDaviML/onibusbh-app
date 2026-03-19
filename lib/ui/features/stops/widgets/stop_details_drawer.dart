@@ -22,8 +22,30 @@ class StopDetailsDrawer extends ConsumerStatefulWidget {
   ConsumerState<StopDetailsDrawer> createState() => _StopDetailsDrawerState();
 }
 
-class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer> {
+class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
+    with SingleTickerProviderStateMixin {
   String? _expandedRouteId;
+  late final AnimationController _heartController;
+  late final Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _heartScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.5), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.5, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _heartController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _heartController.dispose();
+    super.dispose();
+  }
 
   void _toggleLine(PredictionResponseDto prediction) {
     setState(() {
@@ -42,8 +64,8 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final predictionsAsync =
         ref.watch(stopPredictionsProvider(widget.stop.id));
-    final isFav =
-        ref.watch(favoriteStopsProvider.notifier).isFavorite(widget.stop.id);
+    final favoriteStops = ref.watch(favoriteStopsProvider);
+    final isFav = favoriteStops.any((e) => e.id == widget.stop.id);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.55,
@@ -76,55 +98,66 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer> {
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'DETALHES DA PARADA',
-                        style: AppTypography.nunito.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.stop.name,
-                        style: AppTypography.quicksand.copyWith(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      if (widget.stop.description != null &&
-                          widget.stop.description!.isNotEmpty)
-                        Text(
-                          widget.stop.description!,
-                          style: AppTypography.nunito.copyWith(
-                            fontSize: 14,
-                            color: AppColors.slate500,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
+                Text(
+                  'DETALHES DA PARADA',
+                  style: AppTypography.nunito.copyWith(
+                    color: AppColors.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                IconButton(
-                  onPressed: () {
-                    ref.read(favoriteStopsProvider.notifier).toggleFavorite(widget.stop);
-                  },
-                  icon: Icon(
-                    isFav ? Icons.favorite : Icons.favorite_outline,
-                    color: isFav ? Colors.red : AppColors.slate400,
-                  ),
-                  iconSize: 28,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.stop.name,
+                            style: AppTypography.quicksand.copyWith(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (widget.stop.description != null &&
+                              widget.stop.description!.isNotEmpty)
+                            Text(
+                              widget.stop.description!,
+                              style: AppTypography.nunito.copyWith(
+                                fontSize: 14,
+                                color: AppColors.slate500,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ScaleTransition(
+                      scale: _heartScale,
+                      child: IconButton(
+                        onPressed: () {
+                          ref
+                              .read(favoriteStopsProvider.notifier)
+                              .toggleFavorite(widget.stop);
+                          _heartController.forward(from: 0);
+                        },
+                        icon: Icon(
+                          isFav ? Icons.favorite : Icons.favorite_outline,
+                          color: isFav ? Colors.red : AppColors.slate400,
+                        ),
+                        iconSize: 28,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

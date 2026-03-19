@@ -361,7 +361,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             right: 16,
             bottom: _isDrawerOpen
                 ? (MediaQuery.of(context).size.height * 0.55 + 16)
-                : (bottomInset + 100),
+                : (bottomInset + 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

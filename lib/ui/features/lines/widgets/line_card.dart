@@ -6,20 +6,49 @@ import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/favorites_providers.dart';
 import '../../../widgets/soft_shadow_container.dart';
 
-class LineCard extends ConsumerWidget {
+class LineCard extends ConsumerStatefulWidget {
   final LineSummaryDto line;
   final VoidCallback onTap;
 
   const LineCard({super.key, required this.line, required this.onTap});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LineCard> createState() => _LineCardState();
+}
+
+class _LineCardState extends ConsumerState<LineCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _heartController;
+  late final Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _heartScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _heartController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _heartController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isFav = ref.watch(favoriteLinesProvider.notifier).isFavorite(line.routeId);
+    final favoriteLines = ref.watch(favoriteLinesProvider);
+    final isFav = favoriteLines.any((e) => e.routeId == widget.line.routeId);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: SoftShadowContainer(
         margin: const EdgeInsets.only(bottom: 12.0),
         padding: const EdgeInsets.all(16.0),
@@ -32,11 +61,11 @@ class LineCard extends ConsumerWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: line.routeColor,
+                color: widget.line.routeColor,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: line.routeColor.withValues(alpha: 0.3),
+                    color: widget.line.routeColor.withValues(alpha: 0.3),
                     spreadRadius: 0,
                     blurRadius: 10,
                     offset: const Offset(0, 4),
@@ -49,9 +78,9 @@ class LineCard extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: Text(
-                    line.shortName,
+                    widget.line.shortName,
                     style: AppTypography.quicksand.copyWith(
-                      color: line.routeTextColor,
+                      color: widget.line.routeTextColor,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
@@ -70,23 +99,27 @@ class LineCard extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          line.longName,
+                          widget.line.longName,
                           style: theme.textTheme.titleLarge?.copyWith(fontSize: 18),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          ref.read(favoriteLinesProvider.notifier).toggleFavorite(line);
-                        },
-                        icon: Icon(
-                          isFav ? Icons.favorite : Icons.favorite_outline,
-                          color: isFav ? Colors.red : AppColors.slate400,
+                      ScaleTransition(
+                        scale: _heartScale,
+                        child: IconButton(
+                          onPressed: () {
+                            ref.read(favoriteLinesProvider.notifier).toggleFavorite(widget.line);
+                            _heartController.forward(from: 0);
+                          },
+                          icon: Icon(
+                            isFav ? Icons.favorite : Icons.favorite_outline,
+                            color: isFav ? Colors.red : AppColors.slate400,
+                          ),
+                          iconSize: 20,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
-                        iconSize: 20,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -108,7 +141,7 @@ class LineCard extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${line.stopCount} paradas',
+                              '${widget.line.stopCount} paradas',
                               style: AppTypography.quicksand.copyWith(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -123,7 +156,7 @@ class LineCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      if (line.isBidirectional) ...[
+                      if (widget.line.isBidirectional) ...[
                         Icon(
                           Icons.swap_horiz_rounded,
                           size: 14,
@@ -139,9 +172,9 @@ class LineCard extends ConsumerWidget {
                         ),
                         const SizedBox(width: 12),
                       ],
-                      if (line.avgTravelTime > 0)
+                      if (widget.line.avgTravelTime > 0)
                         Text(
-                          '~${line.avgTravelTime} min',
+                          '~${widget.line.avgTravelTime} min',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontSize: 13,
                             color: AppColors.slate500,
@@ -158,3 +191,4 @@ class LineCard extends ConsumerWidget {
     );
   }
 }
+
