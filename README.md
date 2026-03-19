@@ -1,17 +1,47 @@
-# onibusbh
+# Onibus BH
 
-Coordenadas em tempo real
+Aplicativo mobile para acompanhamento de onibus em tempo real em Belo Horizonte.
 
-## Getting Started
+## Funcionalidades
 
-This project is a starting point for a Flutter application.
+- **Diretorio de linhas** -- Busca e visualizacao de todas as linhas de onibus disponiveis
+- **Mapa de rotas** -- Trajeto da linha no mapa com paradas e posicao dos veiculos em tempo real
+- **Mapa global de paradas** -- Visualizacao de todas as paradas da cidade
+- **Rastreamento de parada** -- Previsao de chegada dos proximos onibus em uma parada
+- **Favoritos** -- Linhas e paradas favoritas salvas localmente
 
-A few resources to get you started if this is your first Flutter project:
+## Stack tecnica
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **Flutter** 3.x / Dart 3.11+
+- **State management:** Riverpod (flutter_riverpod + riverpod_generator)
+- **Navegacao:** GoRouter com StatefulShellRoute
+- **HTTP:** Dio
+- **Mapas:** flutter_map com tiles CartoDB
+- **Geolocalizacao:** geolocator
+- **Persistencia local:** SharedPreferences
+- **Serializacao:** Freezed + json_serializable
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Arquitetura
+
+O projeto segue uma arquitetura em camadas:
+
+```
+lib/
+  core/          # Configuracoes globais (rede, roteamento, tema)
+  data/          # Camada de dados (models, repositories, providers)
+  ui/            # Interface (telas, widgets)
+```
+
+- **Models** sao classes imutaveis geradas com Freezed
+- **Repositories** encapsulam chamadas HTTP via ApiClient
+- **Providers** (Riverpod) expoem os dados dos repositories para a UI
+
+## API
+
+A aplicacao consome a API em `https://busapi.davimartinslage.com.br/`
+
+## Pre-requisitos
+
+- Flutter SDK 3.x
+- Java 17 (para builds Android)
+
