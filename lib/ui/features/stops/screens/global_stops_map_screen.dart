@@ -31,22 +31,13 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   late final AnimationController _drawerAnimController;
   late final Animation<Offset> _drawerSlideAnimation;
   late final AnimationController _controlsAnimController;
-  List<StopDto> _stops = [];
-  Timer? _debounceTimer;
   Offset? _backdropStartPos;
   bool _backdropMoved = false;
-  bool _hasLoadedOnce = false;
+  bool _isMapReady = false;
 
   @override
   void initState() {
     super.initState();
-    _initLocationService().then((_) {
-      if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _fetchStopsForCurrentView();
-        });
-      }
-    });
     _drawerAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -86,9 +77,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
         setState(() {
           _userLocation = LatLng(pos.latitude, pos.longitude);
         });
-        try {
-          _centerOnUser();
-        } catch (_) {}
+        _centerOnUser();
       }
 
       _positionStream =
@@ -107,17 +96,10 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     } catch (_) {}
   }
 
-  void _fetchStopsForCurrentView() {
+  void _pushCurrentBBox() {
+    if (!_isMapReady) return;
     final camera = _mapController.camera;
-
-    if (camera.zoom < 14.0) {
-      if (mounted && _stops.isNotEmpty) {
-        setState(() {
-          _stops = [];
-        });
-      }
-      return;
-    }
+    if (camera.zoom < 13.0) return;
 
     final bounds = camera.visibleBounds;
     final bbox = (
@@ -126,36 +108,23 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
       maxLat: bounds.north,
       maxLon: bounds.east,
     );
-
-    ref
-        .read(stopsByBBoxProvider(bbox).future)
-        .then((stops) {
-          if (mounted) {
-            setState(() {
-              _stops = stops;
-              _hasLoadedOnce = true;
-            });
-          }
-        })
-        .catchError((_) {});
-  }
-
-  void _onMapMoved() {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _fetchStopsForCurrentView();
-    });
+    ref.read(mapBboxProvider.notifier).updateBBox(bbox);
   }
 
   void _onMapReady() {
-    if (!_hasLoadedOnce) {
-      _fetchStopsForCurrentView();
-    }
+    _isMapReady = true;
+    _initLocationService();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _pushCurrentBBox();
+    });
+  }
+
+  void _onMapMoved() {
+    _pushCurrentBBox();
   }
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     _drawerAnimController.dispose();
@@ -204,21 +173,17 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
 
   void _zoomIn() {
     final camera = _mapController.camera;
-    _animateMapTo(camera.center, camera.zoom + 1);
+    _animateMapTo(camera.center, camera.zoom + 1, onComplete: _pushCurrentBBox);
   }
 
   void _zoomOut() {
     final camera = _mapController.camera;
-    _animateMapTo(camera.center, camera.zoom - 1);
+    _animateMapTo(camera.center, camera.zoom - 1, onComplete: _pushCurrentBBox);
   }
 
   void _centerOnUser() {
     if (_userLocation != null) {
-      _animateMapTo(
-        _userLocation!,
-        16.0,
-        onComplete: _fetchStopsForCurrentView,
-      );
+      _animateMapTo(_userLocation!, 16.0, onComplete: _pushCurrentBBox);
     }
   }
 
@@ -285,6 +250,9 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
+    final stopsAsync = ref.watch(stopsProvider);
+    final stops = stopsAsync.value ?? [];
+
     return Scaffold(
       body: Stack(
         children: [
@@ -299,9 +267,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                 ),
                 onMapReady: _onMapReady,
                 onPositionChanged: (position, hasGesture) {
-                  if (hasGesture) {
-                    _onMapMoved();
-                  }
+                  _onMapMoved();
                 },
               ),
               children: [
@@ -320,7 +286,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                         height: 48,
                         child: const UserLocationMarker(size: 16),
                       ),
-                    ..._stops.map((stop) {
+                    ...stops.map((stop) {
                       return Marker(
                         point: LatLng(stop.latitude, stop.longitude),
                         width: 36,
