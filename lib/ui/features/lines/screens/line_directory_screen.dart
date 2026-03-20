@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/custom_search_bar.dart';
 import '../widgets/direction_selection_modal.dart';
@@ -52,8 +51,9 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color:
-                                      AppColors.primary.withValues(alpha: 0.15),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -67,11 +67,8 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
                           const SizedBox(width: 12),
                           Text(
                             'Ônibus BH',
-                            style: AppTypography.display.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 28,
-                              color: AppColors.primary,
-                            ),
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(color: AppColors.primary),
                           ),
                         ],
                       ),

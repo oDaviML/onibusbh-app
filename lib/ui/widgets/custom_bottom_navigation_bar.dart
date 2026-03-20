@@ -18,21 +18,21 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8.0,
-                vertical: 8.0,
+                vertical: 6.0,
               ),
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.slate900.withValues(alpha: 0.7)
                     : AppColors.surfaceLight.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(40),
+                borderRadius: BorderRadius.circular(32),
                 border: Border.all(
                   color: isDark
                       ? AppColors.slate700.withValues(alpha: 0.3)
@@ -43,8 +43,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                     color: AppColors.slate900.withValues(
                       alpha: isDark ? 0.3 : 0.12,
                     ),
-                    blurRadius: 32,
-                    offset: const Offset(0, 12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -94,12 +94,12 @@ class _BottomNavItem extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutBack,
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: isActive
               ? AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.1)
@@ -107,10 +107,10 @@ class _BottomNavItem extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: AnimatedScale(
-          scale: isActive ? 1.15 : 1.0,
+          scale: isActive ? 1.1 : 1.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutBack,
-          child: Icon(icon, color: color, size: 28),
+          child: Icon(icon, color: color, size: 24),
         ),
       ),
     );

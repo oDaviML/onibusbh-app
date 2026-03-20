@@ -105,10 +105,8 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text(
                       widget.line.shortName,
-                      style: AppTypography.quicksand.copyWith(
+                      style: AppTypography.titleLarge.copyWith(
                         color: widget.line.routeTextColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -121,18 +119,15 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                   children: [
                     Text(
                       'Selecionar Sentido',
-                      style: AppTypography.nunito.copyWith(
+                      style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.slate500,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
                       widget.line.longName,
-                      style: AppTypography.quicksand.copyWith(
+                      style: AppTypography.headlineMedium.copyWith(
                         color: isDark ? Colors.white : AppColors.slate900,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
                       ),
                     ),
                   ],
@@ -225,19 +220,15 @@ class _DirectionSelectionModalState extends State<DirectionSelectionModal> {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.quicksand.copyWith(
+                    style: AppTypography.titleLarge.copyWith(
                       color: isDark ? Colors.white : AppColors.slate900,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: AppTypography.nunito.copyWith(
+                    style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.slate500,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

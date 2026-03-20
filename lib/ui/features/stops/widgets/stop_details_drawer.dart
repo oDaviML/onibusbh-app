@@ -88,10 +88,8 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
               children: [
                 Text(
                   'DETALHES DA PARADA',
-                  style: AppTypography.nunito.copyWith(
+                  style: AppTypography.caption.copyWith(
                     color: AppColors.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -105,19 +103,16 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                         children: [
                           Text(
                             widget.stop.name,
-                            style: AppTypography.quicksand.copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
+                            style: AppTypography.headlineMedium.copyWith(
+                              fontSize: 22,
                             ),
                           ),
                           if (widget.stop.description != null &&
                               widget.stop.description!.isNotEmpty)
                             Text(
                               widget.stop.description!,
-                              style: AppTypography.nunito.copyWith(
-                                fontSize: 14,
+                              style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.slate500,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                         ],
@@ -175,10 +170,8 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                         const SizedBox(width: 6),
                         Text(
                           '${predictions.length} linhas nesta parada',
-                          style: AppTypography.nunito.copyWith(
-                            fontSize: 13,
+                          style: AppTypography.labelMedium.copyWith(
                             color: AppColors.slate400,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -190,9 +183,8 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                         ? Center(
                             child: Text(
                               'Nenhuma previsão disponível',
-                              style: AppTypography.nunito.copyWith(
+                              style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.slate500,
-                                fontSize: 14,
                               ),
                             ),
                           )
@@ -231,17 +223,14 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                       const SizedBox(height: 8),
                       Text(
                         'Erro ao carregar previsões',
-                        style: AppTypography.quicksand.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        style: AppTypography.titleMedium.copyWith(
                           color: AppColors.slate500,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         error.toString(),
-                        style: AppTypography.nunito.copyWith(
-                          fontSize: 12,
+                        style: AppTypography.labelSmall.copyWith(
                           color: AppColors.slate400,
                         ),
                         textAlign: TextAlign.center,

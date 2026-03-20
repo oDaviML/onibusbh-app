@@ -9,7 +9,7 @@ class CustomSearchBar extends StatelessWidget {
 
   const CustomSearchBar({
     super.key,
-    this.hintText = 'Buscar linhas, paradas ou destinos',
+    this.hintText = 'Digite o nome da linha',
     this.onChanged,
   });
 
@@ -19,11 +19,11 @@ class CustomSearchBar extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: TextField(
         onChanged: onChanged,
-        style: AppTypography.display.copyWith(fontSize: 18),
+        style: AppTypography.titleLarge.copyWith(fontSize: 16),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: AppTypography.display.copyWith(
-            fontSize: 18,
+          hintStyle: AppTypography.titleLarge.copyWith(
+            fontSize: 16,
             color: AppColors.slate400,
           ),
           prefixIcon: Icon(Icons.search, color: AppColors.slate400, size: 24),

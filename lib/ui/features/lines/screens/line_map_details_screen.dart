@@ -32,12 +32,21 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
   Timer? _vehicleRefreshTimer;
+  bool _hasAutoFocused = false;
 
   @override
   void initState() {
     super.initState();
     _initLocationService();
     _startVehiclePolling();
+  }
+
+  void _autoFocusOnRoute(List<LatLng> routePoints) {
+    if (_hasAutoFocused || routePoints.isEmpty) return;
+    _hasAutoFocused = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerOnRoute(routePoints);
+    });
   }
 
   void _startVehiclePolling() {
@@ -190,6 +199,12 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     final vehiclesAsync = ref.watch(lineVehiclesProvider(widget.line.routeId));
 
     final routePoints = shapeAsync.value?.path ?? [];
+
+    shapeAsync.whenData((shape) {
+      if (shape.path.isNotEmpty) {
+        _autoFocusOnRoute(shape.path);
+      }
+    });
     final lineStops = stopsAsync.value ?? [];
     final vehicles = vehiclesAsync.value ?? [];
 
@@ -349,10 +364,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                               ),
                               child: Text(
                                 widget.line.shortName,
-                                style: AppTypography.quicksand.copyWith(
+                                style: AppTypography.busNumber.copyWith(
                                   color: widget.line.routeTextColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -366,9 +379,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                             children: [
                               Text(
                                 widget.line.longName,
-                                style: AppTypography.quicksand.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
+                                style: AppTypography.titleMedium.copyWith(
                                   color: isDark
                                       ? Colors.white
                                       : AppColors.slate900,
@@ -380,10 +391,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                                 children: [
                                   Text(
                                     widget.direction == 0 ? 'Ida' : 'Volta',
-                                    style: AppTypography.nunito.copyWith(
+                                    style: AppTypography.labelMedium.copyWith(
                                       color: AppColors.slate500,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -400,10 +409,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                                     ),
                                     child: Text(
                                       '${vehicles.length} veículos',
-                                      style: AppTypography.nunito.copyWith(
+                                      style: AppTypography.caption.copyWith(
                                         color: widget.line.routeColor,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -457,9 +464,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                       const SizedBox(width: 8),
                       Text(
                         'Carregando rota...',
-                        style: AppTypography.nunito.copyWith(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                        style: AppTypography.labelMedium.copyWith(
                           color: AppColors.slate500,
                         ),
                       ),

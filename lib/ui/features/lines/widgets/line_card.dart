@@ -82,10 +82,8 @@ class _LineCardState extends ConsumerState<LineCard>
                   padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: Text(
                     widget.line.shortName,
-                    style: AppTypography.quicksand.copyWith(
+                    style: AppTypography.busNumber.copyWith(
                       color: widget.line.routeTextColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -103,9 +101,7 @@ class _LineCardState extends ConsumerState<LineCard>
                       Expanded(
                         child: Text(
                           widget.line.longName,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontSize: 18,
-                          ),
+                          style: theme.textTheme.titleLarge,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -157,9 +153,7 @@ class _LineCardState extends ConsumerState<LineCard>
                             const SizedBox(width: 4),
                             Text(
                               '${widget.line.stopCount} paradas',
-                              style: AppTypography.quicksand.copyWith(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                              style: AppTypography.labelSmall.copyWith(
                                 color: AppColors.slate500,
                               ),
                             ),
@@ -180,8 +174,7 @@ class _LineCardState extends ConsumerState<LineCard>
                         const SizedBox(width: 4),
                         Text(
                           'Bidirecional',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 13,
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: AppColors.slate500,
                           ),
                         ),
@@ -190,8 +183,7 @@ class _LineCardState extends ConsumerState<LineCard>
                       if (widget.line.avgTravelTime > 0)
                         Text(
                           '~${widget.line.avgTravelTime} min',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 13,
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: AppColors.slate500,
                           ),
                         ),

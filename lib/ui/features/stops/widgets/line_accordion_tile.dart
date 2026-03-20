@@ -60,10 +60,8 @@ class LinePredictionTile extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: Text(
                     prediction.shortName,
-                    style: AppTypography.quicksand.copyWith(
+                    style: AppTypography.busNumber.copyWith(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -76,9 +74,7 @@ class LinePredictionTile extends StatelessWidget {
                 children: [
                   Text(
                     prediction.headsign ?? prediction.longName,
-                    style: AppTypography.quicksand.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    style: AppTypography.titleMedium.copyWith(
                       color: isDark ? Colors.white : AppColors.slate900,
                     ),
                     maxLines: 1,
@@ -137,9 +133,7 @@ class LinePredictionTile extends StatelessWidget {
                             ),
                             child: Text(
                               '${arrival.etaMinutes}min',
-                              style: AppTypography.nunito.copyWith(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                              style: AppTypography.caption.copyWith(
                                 color: isClose
                                     ? Colors.white
                                     : (isMedium
@@ -152,10 +146,8 @@ class LinePredictionTile extends StatelessWidget {
                       ] else ...[
                         Text(
                           'Sem previsão',
-                          style: AppTypography.nunito.copyWith(
-                            fontSize: 13,
+                          style: AppTypography.labelMedium.copyWith(
                             color: AppColors.slate500,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],

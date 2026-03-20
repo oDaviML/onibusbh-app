@@ -44,11 +44,7 @@ class PredictionCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Text(
                   prediction.shortName,
-                  style: AppTypography.quicksand.copyWith(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.busNumber.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -61,10 +57,7 @@ class PredictionCard extends StatelessWidget {
               children: [
                 Text(
                   prediction.headsign ?? prediction.longName,
-                  style: AppTypography.quicksand.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.titleLarge,
                 ),
                 if (prediction.arrivals.isNotEmpty)
                   Row(
@@ -86,10 +79,8 @@ class PredictionCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         '${prediction.arrivals.length} veículo(s) rastreado(s)',
-                        style: AppTypography.nunito.copyWith(
-                          fontSize: 12,
+                        style: AppTypography.labelSmall.copyWith(
                           color: AppColors.slate500,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -104,20 +95,15 @@ class PredictionCard extends StatelessWidget {
               children: [
                 Text(
                   '$nextEta',
-                  style: AppTypography.quicksand.copyWith(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                  style: AppTypography.etaLarge.copyWith(
                     color: nextEta <= 5
                         ? AppColors.primary
                         : (isDark ? Colors.white : AppColors.slate900),
-                    height: 1.0,
                   ),
                 ),
                 Text(
                   'min',
-                  style: AppTypography.nunito.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.slate400,
                   ),
                 ),

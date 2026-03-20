@@ -139,20 +139,13 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                               children: [
                                 Text(
                                   'Favoritos',
-                                  style: AppTypography.display.copyWith(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.5,
-                                  ),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.displayLarge,
                                 ),
                                 Text(
                                   'Suas rotas e paradas frequentes',
-                                  style: AppTypography.quicksand.copyWith(
-                                    color: isDark
-                                        ? AppColors.slate400
-                                        : AppColors.slate500,
-                                    fontSize: 14,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -281,11 +274,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
       child: Center(
         child: Text(
           message,
-          style: AppTypography.quicksand.copyWith(
-            color: AppColors.slate400,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTypography.bodyLarge.copyWith(color: AppColors.slate400),
         ),
       ),
     );
@@ -335,9 +324,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
               children: [
                 Text(
                   stop.name,
-                  style: AppTypography.display.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -347,9 +335,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   const SizedBox(height: 2),
                   Text(
                     stop.description!,
-                    style: AppTypography.quicksand.copyWith(
+                    style: AppTypography.labelMedium.copyWith(
                       color: isDark ? AppColors.slate400 : AppColors.slate500,
-                      fontSize: 13,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
