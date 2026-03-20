@@ -4,9 +4,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../../data/models/prediction_group.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../../data/providers/favorites_providers.dart';
 import 'line_accordion_tile.dart';
+import 'prediction_accordion_tile.dart';
 
 class StopDetailsDrawer extends ConsumerStatefulWidget {
   final StopDto stop;
@@ -155,59 +157,71 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
 
           Expanded(
             child: predictionsAsync.when(
-              data: (predictions) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.directions_bus_rounded,
-                          size: 16,
-                          color: AppColors.slate400,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${predictions.length} linhas nesta parada',
-                          style: AppTypography.labelMedium.copyWith(
+              data: (predictions) {
+                final groups = PredictionGroup.groupPredictions(predictions);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.directions_bus_rounded,
+                            size: 16,
                             color: AppColors.slate400,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: predictions.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Nenhuma previsão disponível',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.slate500,
-                              ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${groups.length} linhas nesta parada',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.slate400,
                             ),
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.only(
-                              left: 24,
-                              right: 24,
-                              bottom:
-                                  MediaQuery.of(context).padding.bottom + 16,
-                            ),
-                            itemCount: predictions.length,
-                            itemBuilder: (context, index) {
-                              final prediction = predictions[index];
-                              return LinePredictionTile(
-                                prediction: prediction,
-                                onTap: () =>
-                                    widget.onOpenTracking?.call(prediction),
-                              );
-                            },
                           ),
-                  ),
-                ],
-              ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: groups.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Nenhuma previs\u00e3o dispon\u00edvel',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.slate500,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.only(
+                                left: 24,
+                                right: 24,
+                                bottom:
+                                    MediaQuery.of(context).padding.bottom + 16,
+                              ),
+                              itemCount: groups.length,
+                              itemBuilder: (context, index) {
+                                final group = groups[index];
+                                if (group.isGrouped) {
+                                  return PredictionAccordionTile(
+                                    group: group,
+                                    onTap: (prediction) =>
+                                        widget.onOpenTracking?.call(prediction),
+                                  );
+                                }
+                                final prediction =
+                                    group.directions.values.first;
+                                return LinePredictionTile(
+                                  prediction: prediction,
+                                  onTap: () =>
+                                      widget.onOpenTracking?.call(prediction),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Padding(

@@ -15,6 +15,7 @@ ArrivalPredictionDto _$ArrivalPredictionDtoFromJson(
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
   bearing: (json['bearing'] as num?)?.toInt(),
+  directionId: (json['directionId'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ArrivalPredictionDtoToJson(
@@ -26,6 +27,7 @@ Map<String, dynamic> _$ArrivalPredictionDtoToJson(
   'latitude': instance.latitude,
   'longitude': instance.longitude,
   'bearing': instance.bearing,
+  'directionId': instance.directionId,
 };
 
 PredictionResponseDto _$PredictionResponseDtoFromJson(
@@ -36,7 +38,7 @@ PredictionResponseDto _$PredictionResponseDtoFromJson(
   longName: json['longName'] as String,
   color: json['color'] as String?,
   headsign: json['headsign'] as String?,
-  direction: (json['direction'] as num?)?.toInt() ?? 0,
+  direction: (json['directionId'] as num?)?.toInt() ?? 0,
   arrivals:
       (json['arrivals'] as List<dynamic>?)
           ?.map((e) => ArrivalPredictionDto.fromJson(e as Map<String, dynamic>))
@@ -52,6 +54,6 @@ Map<String, dynamic> _$PredictionResponseDtoToJson(
   'longName': instance.longName,
   'color': instance.color,
   'headsign': instance.headsign,
-  'direction': instance.direction,
+  'directionId': instance.direction,
   'arrivals': instance.arrivals,
 };

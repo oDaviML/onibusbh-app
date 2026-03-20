@@ -11,6 +11,8 @@ class ArrivalPredictionDto {
   final double? latitude;
   final double? longitude;
   final int? bearing;
+  @JsonKey(name: 'directionId')
+  final int? directionId;
 
   const ArrivalPredictionDto({
     required this.etaMinutes,
@@ -19,6 +21,7 @@ class ArrivalPredictionDto {
     this.latitude,
     this.longitude,
     this.bearing,
+    this.directionId,
   });
 
   factory ArrivalPredictionDto.fromJson(Map<String, dynamic> json) =>
@@ -34,6 +37,7 @@ class PredictionResponseDto {
   final String longName;
   final String? color;
   final String? headsign;
+  @JsonKey(name: 'directionId')
   final int direction;
   final List<ArrivalPredictionDto> arrivals;
 

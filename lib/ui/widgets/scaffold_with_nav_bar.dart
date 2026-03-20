@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'custom_bottom_navigation_bar.dart';
+import '../../data/providers/update_providers.dart';
+import 'update_dialog.dart';
 
-class ScaffoldWithNavBar extends StatefulWidget {
+class ScaffoldWithNavBar extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const ScaffoldWithNavBar({super.key, required this.navigationShell});
@@ -11,14 +14,15 @@ class ScaffoldWithNavBar extends StatefulWidget {
   static final forceHide = ValueNotifier<bool>(false);
 
   @override
-  State<ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
+  ConsumerState<ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
 }
 
-class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
+class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
   @override
   void initState() {
     super.initState();
     _requestInitialLocationPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
     ScaffoldWithNavBar.forceHide.addListener(_onForceHideChanged);
   }
 
@@ -40,6 +44,13 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       await Geolocator.requestPermission();
+    }
+  }
+
+  Future<void> _checkForUpdate() async {
+    final release = await ref.read(updateCheckProvider.future);
+    if (release != null && mounted) {
+      UpdateDialog.show(context, release);
     }
   }
 
