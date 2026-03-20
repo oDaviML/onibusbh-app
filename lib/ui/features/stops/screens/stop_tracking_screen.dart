@@ -311,8 +311,8 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                     ...vehicles.map(
                       (v) => Marker(
                         point: LatLng(v.latitude, v.longitude),
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         child: BusMarker(
                           color: routeColor,
                           bearing: v.bearing.toDouble(),

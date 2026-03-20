@@ -296,8 +296,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                     ...vehicles.map((v) {
                       return Marker(
                         point: LatLng(v.latitude, v.longitude),
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         child: BusMarker(
                           color: widget.line.routeColor,
                           bearing: v.bearing.toDouble(),
@@ -317,15 +317,12 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             left: 16,
             right: 16,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _MapControlButton(
-                    isDark: isDark,
-                    icon: Icons.arrow_back_rounded,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                _MapControlButton(
+                  isDark: isDark,
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
