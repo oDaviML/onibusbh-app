@@ -45,6 +45,8 @@ dependencies:
   json_annotation: ^4.11.0
   freezed_annotation: ^3.1.0
   shared_preferences: ^2.5.4
+  package_info_plus: ^8.3.0
+  ota_update: ^7.1.0
 
 dev_dependencies:
   flutter_test:
