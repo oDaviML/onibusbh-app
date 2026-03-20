@@ -48,19 +48,29 @@ jobs:
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
-          # Extrai o conteúdo da versão atual do CHANGELOG
           if [ -f CHANGELOG.md ]; then
-            # Pega o conteúdo entre o header da versão atual e a versão anterior
-            CONTENT=$(awk "/^## \[$GITHUB_REF_NAME\]/,/^## \[v[0-9]/ {if(/^## \[v[0-9]/) exit; if(!(/^## \[$GITHUB_REF_NAME\]/ || /^#/)) print}" CHANGELOG.md | sed '/^$/d' | head -50)
-            if [ -z "$CONTENT" ]; then
-              # Fallback: pega tudo até a próxima versão
-              CONTENT=$(awk "/^## \[$GITHUB_REF_NAME\]/,0" CHANGELOG.md | tail -n +2 | head -50)
+            # Extract version block: from "## [v1.2.0]" to next "## [v" or end of file
+            CONTENT=$(awk -v tag="$GITHUB_REF_NAME" '
+              BEGIN { found=0 }
+              /^## \[v[0-9]/ && found { exit }
+              /^## \['"'"''"'"']?v/ { 
+                gsub(/\[|\]|[v'\"']/, "", $0)
+                if (index($0, tag) == 1) { found=1; next }
+                next
+              }
+              found { print }
+            ' CHANGELOG.md | sed '/^$/d' | head -60)
+
+            if [ -n "$CONTENT" ]; then
+              CONTENT="${CONTENT//'%'/'%25'}"
+              CONTENT="${CONTENT//$'\n'/'%0A'}"
+              CONTENT="${CONTENT//$'\r'/'%0D'}"
+              echo "body=$CONTENT" >> $GITHUB_OUTPUT
+            else
+              echo "body=Consulte o CHANGELOG.md para detalhes." >> $GITHUB_OUTPUT
             fi
-            echo "body<<EOF" >> $GITHUB_OUTPUT
-            echo "$CONTENT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "body=Consulte o CHANGELOG para detalhes." >> $GITHUB_OUTPUT
+            echo "body=Consulte o CHANGELOG.md para detalhes." >> $GITHUB_OUTPUT
           fi
 
       - name: Build APK
@@ -75,7 +85,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Onibus BH ${{ github.ref_name }}"
-          body: ${{ steps.changelog.outputs.body || 'Consulte o CHANGELOG para detalhes.' }}
+          body: ${{ steps.changelog.outputs.body }}
           files: build/app/outputs/flutter-apk/onibusbh-${{ github.ref_name }}.apk
           draft: false
           prerelease: false
