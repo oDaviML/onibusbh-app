@@ -286,13 +286,17 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                         child: UserLocationMarker(size: 16, isDark: isDark),
                       ),
                     ...stops.map((stop) {
+                      final isSelected = _selectedStop?.id == stop.id;
                       return Marker(
                         point: LatLng(stop.latitude, stop.longitude),
-                        width: 36,
-                        height: 36,
+                        width: isSelected ? 48 : 36,
+                        height: isSelected ? 48 : 36,
                         child: GestureDetector(
                           onTap: () => _onStopTapped(stop),
-                          child: _StopMarker(isDark: isDark),
+                          child: _StopMarker(
+                            isDark: isDark,
+                            isSelected: isSelected,
+                          ),
                         ),
                       );
                     }),
@@ -464,30 +468,51 @@ class _MapControlButton extends StatelessWidget {
 
 class _StopMarker extends StatelessWidget {
   final bool isDark;
+  final bool isSelected;
 
-  const _StopMarker({required this.isDark});
+  const _StopMarker({required this.isDark, this.isSelected = false});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 32,
+    final size = isSelected ? 40.0 : 32.0;
+    final borderWidth = isSelected ? 3.0 : 2.5;
+    final iconSize = isSelected ? 24.0 : 18.0;
+    final blurRadius = isSelected ? 16.0 : 8.0;
+    final spreadRadius = isSelected ? 2.0 : 0.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutBack,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.slate800 : Colors.white,
+        color: isSelected
+            ? AppColors.primary
+            : (isDark ? AppColors.slate800 : Colors.white),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primary, width: 2.5),
+        border: Border.all(
+          color: isSelected
+              ? Colors.white
+              : (isDark
+                    ? AppColors.primary.withValues(alpha: 0.8)
+                    : AppColors.primary),
+          width: borderWidth,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.25),
-            blurRadius: 8,
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.6)
+                : AppColors.primary.withValues(alpha: isDark ? 0.4 : 0.25),
+            blurRadius: blurRadius,
+            spreadRadius: spreadRadius,
             offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Icon(
         Icons.location_on_rounded,
-        color: AppColors.primary,
-        size: 18,
+        color: isSelected ? Colors.white : AppColors.primary,
+        size: iconSize,
       ),
     );
   }

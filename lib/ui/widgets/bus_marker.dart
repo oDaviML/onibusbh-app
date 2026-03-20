@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class BusMarker extends StatelessWidget {
   final Color color;
@@ -18,7 +17,8 @@ class BusMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isDark ? AppColors.slate700 : Colors.white;
+    final borderColor = isDark ? Colors.white : Colors.white;
+    final iconBgColor = isDark ? Colors.black54 : Colors.white;
 
     return Stack(
       alignment: Alignment.center,
@@ -28,8 +28,22 @@ class BusMarker extends StatelessWidget {
           child: Align(
             alignment: Alignment.topCenter,
             child: FractionalTranslation(
-              translation: const Offset(0.0, -0.1),
-              child: Icon(Icons.eject, color: color, size: 20),
+              translation: const Offset(0.0, -0.15),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.navigation, color: color, size: 18),
+              ),
             ),
           ),
         ),

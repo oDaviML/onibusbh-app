@@ -257,9 +257,11 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                       Polyline(
                         points: routePoints,
                         color: routeColor,
-                        strokeWidth: 5.0,
-                        borderColor: routeColor.withValues(alpha: 0.3),
-                        borderStrokeWidth: 2.0,
+                        strokeWidth: isDark ? 6.0 : 5.0,
+                        borderColor: routeColor.withValues(
+                          alpha: isDark ? 0.6 : 0.3,
+                        ),
+                        borderStrokeWidth: isDark ? 3.0 : 2.0,
                       ),
                     ],
                   ),
@@ -277,25 +279,32 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         widget.stop.latitude,
                         widget.stop.longitude,
                       ),
-                      width: 40,
-                      height: 40,
+                      width: 48,
+                      height: 48,
                       child: Container(
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.slate800 : Colors.white,
                           shape: BoxShape.circle,
-                          border: Border.all(color: routeColor, width: 3),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : routeColor,
+                            width: isDark ? 3.5 : 3,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: routeColor.withValues(alpha: 0.3),
-                              blurRadius: 12,
+                              color: isDark
+                                  ? Colors.black.withValues(alpha: 0.5)
+                                  : routeColor.withValues(alpha: 0.4),
+                              blurRadius: isDark ? 16 : 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Icon(
                           Icons.location_on_rounded,
-                          color: routeColor,
-                          size: 22,
+                          color: isDark ? Colors.white : routeColor,
+                          size: 26,
                         ),
                       ),
                     ),

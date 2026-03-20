@@ -235,11 +235,11 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                       Polyline(
                         points: routePoints,
                         color: widget.line.routeColor,
-                        strokeWidth: 5.0,
+                        strokeWidth: isDark ? 6.0 : 5.0,
                         borderColor: widget.line.routeColor.withValues(
-                          alpha: 0.3,
+                          alpha: isDark ? 0.6 : 0.3,
                         ),
-                        borderStrokeWidth: 2.0,
+                        borderStrokeWidth: isDark ? 3.0 : 2.0,
                       ),
                     ],
                   ),
@@ -253,34 +253,42 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                         child: UserLocationMarker(size: 16, isDark: isDark),
                       ),
                     ...lineStops.map((stop) {
+                      final stopSize = isDark ? 28.0 : 24.0;
+                      final iconSize = isDark ? 12.0 : 8.0;
                       return Marker(
                         point: LatLng(stop.latitude, stop.longitude),
-                        width: 24,
-                        height: 24,
+                        width: stopSize,
+                        height: stopSize,
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: stopSize,
+                          height: stopSize,
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.slate800 : Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: widget.line.routeColor,
-                              width: 2,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : widget.line.routeColor,
+                              width: isDark ? 2.5 : 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: widget.line.routeColor.withValues(
-                                  alpha: 0.2,
-                                ),
-                                blurRadius: 4,
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.5)
+                                    : widget.line.routeColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                blurRadius: isDark ? 8 : 4,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                           child: Icon(
                             Icons.circle,
-                            color: widget.line.routeColor,
-                            size: 8,
+                            color: isDark
+                                ? Colors.white
+                                : widget.line.routeColor,
+                            size: iconSize,
                           ),
                         ),
                       );
