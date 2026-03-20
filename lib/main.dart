@@ -9,12 +9,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPrefs = await SharedPreferences.getInstance();
 
-  runApp(ProviderScope(
-    overrides: [
-      sharedPreferencesProvider.overrideWithValue(sharedPrefs),
-    ],
-    child: const OnibusBhApp(),
-  ));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
+      child: const OnibusBhApp(),
+    ),
+  );
 }
 
 class OnibusBhApp extends StatelessWidget {
@@ -23,7 +23,7 @@ class OnibusBhApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Ônibus BH - Soft UI',
+      title: 'Ônibus BH',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,

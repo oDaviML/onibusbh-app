@@ -212,7 +212,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                   urlTemplate:
                       'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
                   subdomains: const ['a', 'b', 'c', 'd'],
-                  userAgentPackageName: 'com.example.onibusbh',
+                  userAgentPackageName: 'com.onibusbh.app',
                 ),
                 if (routePoints.isNotEmpty)
                   PolylineLayer(
