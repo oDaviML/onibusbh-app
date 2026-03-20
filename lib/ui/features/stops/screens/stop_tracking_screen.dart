@@ -62,7 +62,12 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
 
   void _startPolling() {
     _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      ref.invalidate(lineVehiclesProvider(widget.prediction.routeId));
+      ref.invalidate(
+        lineVehiclesProvider((
+          lineId: widget.prediction.routeId,
+          direction: widget.prediction.direction,
+        )),
+      );
     });
     _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       ref.invalidate(stopPredictionsProvider(widget.stop.id));
@@ -209,10 +214,16 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     final routeColor = widget.prediction.routeColor;
 
     final shapeAsync = ref.watch(
-      lineShapeProvider((lineId: widget.prediction.routeId, direction: 0)),
+      lineShapeProvider((
+        lineId: widget.prediction.routeId,
+        direction: widget.prediction.direction,
+      )),
     );
     final vehiclesAsync = ref.watch(
-      lineVehiclesProvider(widget.prediction.routeId),
+      lineVehiclesProvider((
+        lineId: widget.prediction.routeId,
+        direction: widget.prediction.direction,
+      )),
     );
     final predictionsAsync = ref.watch(stopPredictionsProvider(widget.stop.id));
 

@@ -71,9 +71,13 @@ class LineRepository {
     return baseResponse.data ?? [];
   }
 
-  Future<List<VehiclePositionDto>> getLineVehicles(String lineId) async {
+  Future<List<VehiclePositionDto>> getLineVehicles(
+    String lineId, {
+    int? direction,
+  }) async {
     final response = await _client.get<Map<String, dynamic>>(
       ApiEndpoints.lineVehicles(lineId),
+      queryParameters: direction != null ? {'direction': direction} : null,
     );
 
     final baseResponse = BaseResponse<List<VehiclePositionDto>>.fromJson(

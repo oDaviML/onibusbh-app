@@ -6,12 +6,30 @@ info:
     pontos de parada.
   license:
     name: Apache 2.0
-    url: https://springdoc.org
+    url: https://www.apache.org/licenses/LICENSE-2.0
   version: v2.0.0
 servers:
   - url: http://localhost:8080
     description: Generated server url
 paths:
+  /api/v1/gtfs/static/ingest:
+    post:
+      tags:
+        - gtfs-controller
+      operationId: ingestStaticData
+      parameters:
+        - name: X-Admin-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/BaseResponseMapStringString"
   /api/v1/stops:
     get:
       tags:
@@ -101,6 +119,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: direction
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
           description: OK
@@ -158,10 +182,24 @@ paths:
                 $ref: "#/components/schemas/BaseResponseShapeDto"
 components:
   schemas:
+    BaseResponseMapStringString:
+      type: object
+      properties:
+        error:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          additionalProperties:
+            type: string
     BaseResponseListStopDto:
       type: object
       properties:
-        isError:
+        error:
           type: boolean
         message:
           type: string
@@ -209,7 +247,7 @@ components:
     BaseResponseListPredictionResponseDto:
       type: object
       properties:
-        isError:
+        error:
           type: boolean
         message:
           type: string
@@ -240,7 +278,7 @@ components:
     BaseResponseListLineSummaryDto:
       type: object
       properties:
-        isError:
+        error:
           type: boolean
         message:
           type: string
@@ -275,7 +313,7 @@ components:
     BaseResponseListVehiclePositionDto:
       type: object
       properties:
-        isError:
+        error:
           type: boolean
         message:
           type: string
@@ -306,7 +344,7 @@ components:
     BaseResponseShapeDto:
       type: object
       properties:
-        isError:
+        error:
           type: boolean
         message:
           type: string
@@ -329,12 +367,12 @@ components:
           format: double
         valid:
           type: boolean
-        coordinate:
-          $ref: "#/components/schemas/Coordinate"
-          writeOnly: true
         m:
           type: number
           format: double
+        coordinate:
+          $ref: "#/components/schemas/Coordinate"
+          writeOnly: true
     CoordinateSequence:
       type: object
       properties:
@@ -353,9 +391,6 @@ components:
         diameter:
           type: number
           format: double
-        height:
-          type: number
-          format: double
         minX:
           type: number
           format: double
@@ -369,6 +404,9 @@ components:
           type: number
           format: double
         area:
+          type: number
+          format: double
+        height:
           type: number
           format: double
         width:
@@ -394,13 +432,13 @@ components:
           format: int32
         envelopeInternal:
           $ref: "#/components/schemas/Envelope"
-        coordinate:
-          $ref: "#/components/schemas/Coordinate"
         precisionModel:
           $ref: "#/components/schemas/PrecisionModel"
         srid:
           type: integer
           format: int32
+        coordinate:
+          $ref: "#/components/schemas/Coordinate"
         geometryType:
           type: string
         coordinates:
@@ -510,15 +548,15 @@ components:
           $ref: "#/components/schemas/Type"
         floating:
           type: boolean
-        maximumSignificantDigits:
-          type: integer
-          format: int32
         offsetX:
           type: number
           format: double
         offsetY:
           type: number
           format: double
+        maximumSignificantDigits:
+          type: integer
+          format: int32
     ShapeDto:
       type: object
       properties:

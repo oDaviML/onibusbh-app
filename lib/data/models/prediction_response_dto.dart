@@ -34,6 +34,7 @@ class PredictionResponseDto {
   final String longName;
   final String? color;
   final String? headsign;
+  final int direction;
   final List<ArrivalPredictionDto> arrivals;
 
   const PredictionResponseDto({
@@ -42,6 +43,7 @@ class PredictionResponseDto {
     required this.longName,
     this.color,
     this.headsign,
+    this.direction = 0,
     this.arrivals = const [],
   });
 

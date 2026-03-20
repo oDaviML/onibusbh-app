@@ -36,6 +36,7 @@ PredictionResponseDto _$PredictionResponseDtoFromJson(
   longName: json['longName'] as String,
   color: json['color'] as String?,
   headsign: json['headsign'] as String?,
+  direction: (json['direction'] as num?)?.toInt() ?? 0,
   arrivals:
       (json['arrivals'] as List<dynamic>?)
           ?.map((e) => ArrivalPredictionDto.fromJson(e as Map<String, dynamic>))
@@ -51,5 +52,6 @@ Map<String, dynamic> _$PredictionResponseDtoToJson(
   'longName': instance.longName,
   'color': instance.color,
   'headsign': instance.headsign,
+  'direction': instance.direction,
   'arrivals': instance.arrivals,
 };

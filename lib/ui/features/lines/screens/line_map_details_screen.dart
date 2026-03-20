@@ -52,7 +52,12 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
   void _startVehiclePolling() {
     _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      ref.invalidate(lineVehiclesProvider(widget.line.routeId));
+      ref.invalidate(
+        lineVehiclesProvider((
+          lineId: widget.line.routeId,
+          direction: widget.direction,
+        )),
+      );
     });
   }
 
@@ -197,7 +202,12 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
     final shapeAsync = ref.watch(lineShapeProvider(shapeParams));
     final stopsAsync = ref.watch(lineStopsProvider(stopsParams));
-    final vehiclesAsync = ref.watch(lineVehiclesProvider(widget.line.routeId));
+    final vehiclesAsync = ref.watch(
+      lineVehiclesProvider((
+        lineId: widget.line.routeId,
+        direction: widget.direction,
+      )),
+    );
 
     final routePoints = shapeAsync.value?.path ?? [];
 

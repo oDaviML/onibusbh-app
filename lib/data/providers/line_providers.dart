@@ -42,7 +42,13 @@ final lineStopsProvider =
     });
 
 final lineVehiclesProvider = FutureProvider.autoDispose
-    .family<List<VehiclePositionDto>, String>((ref, lineId) async {
+    .family<List<VehiclePositionDto>, ({String lineId, int direction})>((
+      ref,
+      params,
+    ) async {
       final repository = ref.watch(lineRepositoryProvider);
-      return repository.getLineVehicles(lineId);
+      return repository.getLineVehicles(
+        params.lineId,
+        direction: params.direction,
+      );
     });

@@ -12,6 +12,7 @@ VehiclePositionDto _$VehiclePositionDtoFromJson(Map<String, dynamic> json) =>
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       bearing: (json['bearing'] as num?)?.toInt() ?? 0,
+      direction: (json['direction'] as num?)?.toInt() ?? 0,
       timestamp: json['timestamp'] == null
           ? null
           : DateTime.parse(json['timestamp'] as String),
@@ -23,5 +24,6 @@ Map<String, dynamic> _$VehiclePositionDtoToJson(VehiclePositionDto instance) =>
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'bearing': instance.bearing,
+      'direction': instance.direction,
       'timestamp': instance.timestamp?.toIso8601String(),
     };

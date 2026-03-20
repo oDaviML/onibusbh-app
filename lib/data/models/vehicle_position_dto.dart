@@ -8,6 +8,7 @@ class VehiclePositionDto {
   final double latitude;
   final double longitude;
   final int bearing;
+  final int direction;
   final DateTime? timestamp;
 
   const VehiclePositionDto({
@@ -15,6 +16,7 @@ class VehiclePositionDto {
     required this.latitude,
     required this.longitude,
     this.bearing = 0,
+    this.direction = 0,
     this.timestamp,
   });
 
