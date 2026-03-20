@@ -1,20 +1,25 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class BusMarker extends StatelessWidget {
   final Color color;
   final double bearing;
   final String shortName;
+  final bool isDark;
 
   const BusMarker({
     super.key,
     required this.color,
     required this.bearing,
     required this.shortName,
+    this.isDark = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = isDark ? AppColors.slate700 : Colors.white;
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -34,11 +39,13 @@ class BusMarker extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
+            border: Border.all(color: borderColor, width: 2),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 8,
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : color.withValues(alpha: 0.4),
+                blurRadius: isDark ? 12 : 8,
                 offset: const Offset(0, 4),
               ),
             ],

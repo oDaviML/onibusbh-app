@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/bus_marker.dart';
@@ -224,9 +225,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c', 'd'],
+                  urlTemplate: MapStyles.getTileUrl(isDark),
+                  subdomains: MapStyles.subdomains,
                   userAgentPackageName: 'com.onibusbh.app',
                 ),
                 if (routePoints.isNotEmpty)
@@ -250,7 +250,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                         point: _userLocation!,
                         width: 48,
                         height: 48,
-                        child: const UserLocationMarker(size: 16),
+                        child: UserLocationMarker(size: 16, isDark: isDark),
                       ),
                     ...lineStops.map((stop) {
                       return Marker(
@@ -294,6 +294,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                           color: widget.line.routeColor,
                           bearing: v.bearing.toDouble(),
                           shortName: widget.line.shortName,
+                          isDark: isDark,
                         ),
                       );
                     }),

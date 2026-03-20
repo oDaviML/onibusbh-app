@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/custom_search_bar.dart';
+import '../../../widgets/theme_toggle_button.dart';
 import '../widgets/direction_selection_modal.dart';
 import '../widgets/line_card.dart';
 
@@ -70,6 +71,8 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
                             style: Theme.of(context).textTheme.displayLarge
                                 ?.copyWith(color: AppColors.primary),
                           ),
+                          const Spacer(),
+                          const ThemeToggleButton(),
                         ],
                       ),
                       const SizedBox(height: 16),

@@ -11,6 +11,7 @@ import '../../lines/widgets/direction_selection_modal.dart';
 import '../../stops/widgets/stop_details_drawer.dart';
 import '../../stops/screens/stop_tracking_screen.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
+import '../../../widgets/theme_toggle_button.dart';
 
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
@@ -149,6 +150,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                                 ),
                               ],
                             ),
+                            const ThemeToggleButton(),
                           ],
                         ),
                         const SizedBox(height: 24),

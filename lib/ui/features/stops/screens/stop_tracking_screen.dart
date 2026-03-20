@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/line_providers.dart';
@@ -246,9 +247,8 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c', 'd'],
+                  urlTemplate: MapStyles.getTileUrl(isDark),
+                  subdomains: MapStyles.subdomains,
                   userAgentPackageName: 'com.onibusbh.app',
                 ),
                 if (routePoints.isNotEmpty)
@@ -270,7 +270,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         point: _userLocation!,
                         width: 48,
                         height: 48,
-                        child: const UserLocationMarker(size: 16),
+                        child: UserLocationMarker(size: 16, isDark: isDark),
                       ),
                     Marker(
                       point: LatLng(
@@ -308,6 +308,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                           color: routeColor,
                           bearing: v.bearing.toDouble(),
                           shortName: widget.prediction.shortName,
+                          isDark: isDark,
                         ),
                       ),
                     ),
