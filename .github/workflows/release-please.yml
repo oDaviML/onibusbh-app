@@ -1,0 +1,49 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release-please:
+    name: Bump version & update CHANGELOG
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          cache: true
+
+      - name: Run release-please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: dart
+          package-name: onibusbh
+          default-branch: main
+          changelog-path: CHANGELOG.md
+          version-file: pubspec.yaml
+          skip-labeling: true
+          auto-push: true
+          commit-message: 'chore: release ${version}'
+
+  # Envia notificação com a versão bumpada (opcional, via commit no chat)
+  # Este job não bloqueia o fluxo — é apenas informativo
+  notify:
+    name: Notify version bump
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: needs.release-please.outputs.version != ''
+    steps:
+      - name: Info
+        run: echo "Version bumped to ${{ needs.release-please.outputs.version }} and CHANGELOG updated on main."

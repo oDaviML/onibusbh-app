@@ -5,13 +5,15 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: Build & Release APK
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +45,24 @@ jobs:
           keyPassword=${{ secrets.KEY_PASSWORD }}
           EOF
 
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          # Extrai o conteúdo da versão atual do CHANGELOG
+          if [ -f CHANGELOG.md ]; then
+            # Pega o conteúdo entre o header da versão atual e a versão anterior
+            CONTENT=$(awk "/^## \[$GITHUB_REF_NAME\]/,/^## \[v[0-9]/ {if(/^## \[v[0-9]/) exit; if(!(/^## \[$GITHUB_REF_NAME\]/ || /^#/)) print}" CHANGELOG.md | sed '/^$/d' | head -50)
+            if [ -z "$CONTENT" ]; then
+              # Fallback: pega tudo até a próxima versão
+              CONTENT=$(awk "/^## \[$GITHUB_REF_NAME\]/,0" CHANGELOG.md | tail -n +2 | head -50)
+            fi
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "$CONTENT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "body=Consulte o CHANGELOG para detalhes." >> $GITHUB_OUTPUT
+          fi
+
       - name: Build APK
         run: flutter build apk --release
 
@@ -55,13 +75,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Onibus BH ${{ github.ref_name }}"
-          body: |
-            ## Onibus BH ${{ github.ref_name }}
-
-            ### Instalação
-            1. Baixe o arquivo `.apk` abaixo
-            2. No Android, habilite **Instalar de fontes desconhecidas** nas configurações
-            3. Abra o arquivo para instalar
+          body: ${{ steps.changelog.outputs.body || 'Consulte o CHANGELOG para detalhes.' }}
           files: build/app/outputs/flutter-apk/onibusbh-${{ github.ref_name }}.apk
           draft: false
           prerelease: false
