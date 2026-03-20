@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://192.168.0.17:8080';
+  static const String baseUrl = 'https://busapi.davimartinslage.com.br';
 
   static const String lines = '/api/v1/lines';
   static String lineShape(String id) => '/api/v1/lines/$id/shape';
