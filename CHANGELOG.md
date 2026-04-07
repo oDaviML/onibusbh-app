@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.0] - 2026-04-07
+
+### Melhorias
+
+- Mapa com paradas agrupadas automaticamente quando há muitas próximas
+- Interface mais limpa e responsiva
+- Animações mais suaves
+- Design refinado dos marcadores e controles do mapa
+
 ## [1.3.0] - 2026-03-20
 
 ### Features

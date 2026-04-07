@@ -62,7 +62,7 @@ class _MapController extends Notifier<MapState> {
 
     _pendingBBox = newBBox;
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
       if (_lastZoom < minZoomForStops) return;
       state = (bbox: newBBox, zoom: _lastZoom);
     });

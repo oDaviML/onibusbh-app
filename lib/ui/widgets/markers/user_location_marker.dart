@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 class UserLocationMarker extends StatefulWidget {
   final double size;
   final bool isDark;
 
-  const UserLocationMarker({super.key, this.size = 24, this.isDark = false});
+  const UserLocationMarker({
+    super.key,
+    this.size = 24,
+    this.isDark = false,
+  });
 
   @override
   State<UserLocationMarker> createState() => _UserLocationMarkerState();
@@ -20,7 +24,7 @@ class _UserLocationMarkerState extends State<UserLocationMarker>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
   }
 
@@ -32,18 +36,20 @@ class _UserLocationMarkerState extends State<UserLocationMarker>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size(widget.size + 24, widget.size + 24),
-          painter: _UserLocationPainter(
-            pulse: _controller.value,
-            dotSize: widget.size,
-            isDark: widget.isDark,
-          ),
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            size: Size(widget.size + 24, widget.size + 24),
+            painter: _UserLocationPainter(
+              pulse: _controller.value,
+              dotSize: widget.size,
+              isDark: widget.isDark,
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -66,10 +72,10 @@ class _UserLocationPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final borderColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-    final haloRadius = dotSize / 2 + (12 * pulse);
+    final haloRadius = dotSize / 2 + (14 * pulse);
     final haloOpacity = isDark
-        ? 0.25 * (1 - pulse * 0.6)
-        : 0.35 * (1 - pulse * 0.6);
+        ? 0.2 * (1 - pulse * 0.7)
+        : 0.3 * (1 - pulse * 0.7);
 
     final haloPaint = Paint()
       ..color = _primaryColor.withValues(alpha: haloOpacity)
@@ -77,10 +83,10 @@ class _UserLocationPainter extends CustomPainter {
 
     canvas.drawCircle(center, haloRadius, haloPaint);
 
-    final innerHaloRadius = dotSize / 2 + (4 * pulse);
+    final innerHaloRadius = dotSize / 2 + (5 * pulse);
     final innerHaloOpacity = isDark
-        ? 0.15 * (1 - pulse * 0.5)
-        : 0.2 * (1 - pulse * 0.5);
+        ? 0.12 * (1 - pulse * 0.5)
+        : 0.18 * (1 - pulse * 0.5);
 
     final innerHaloPaint = Paint()
       ..color = _primaryColor.withValues(alpha: innerHaloOpacity)
@@ -89,7 +95,7 @@ class _UserLocationPainter extends CustomPainter {
     canvas.drawCircle(center, innerHaloRadius, innerHaloPaint);
 
     final outerDotPaint = Paint()
-      ..color = _primaryColor.withValues(alpha: isDark ? 0.2 : 0.3)
+      ..color = _primaryColor.withValues(alpha: isDark ? 0.15 : 0.25)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(center, dotSize / 2 + 2, outerDotPaint);
@@ -106,12 +112,6 @@ class _UserLocationPainter extends CustomPainter {
       ..strokeWidth = 2.5;
 
     canvas.drawCircle(center, dotSize / 2, borderPaint);
-
-    final shadowPaint = Paint()
-      ..color = _primaryColor.withValues(alpha: isDark ? 0.3 : 0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-
-    canvas.drawCircle(center, dotSize / 2, shadowPaint);
   }
 
   @override

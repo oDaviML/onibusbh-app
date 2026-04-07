@@ -9,8 +9,10 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/line_providers.dart';
-import '../../../widgets/bus_marker.dart';
-import '../../../widgets/user_location_marker.dart';
+import '../../../widgets/markers/stop_marker.dart';
+import '../../../widgets/markers/vehicle_marker.dart';
+import '../../../widgets/markers/user_location_marker.dart';
+import '../../../widgets/map/map_controls.dart';
 
 class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
@@ -51,7 +53,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   }
 
   void _startVehiclePolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       ref.invalidate(
         lineVehiclesProvider((
           lineId: widget.line.routeId,
@@ -260,46 +262,19 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                         point: _userLocation!,
                         width: 48,
                         height: 48,
-                        child: UserLocationMarker(size: 16, isDark: isDark),
+                        child: RepaintBoundary(
+                          child: UserLocationMarker(size: 16, isDark: isDark),
+                        ),
                       ),
                     ...lineStops.map((stop) {
-                      final stopSize = isDark ? 28.0 : 24.0;
-                      final iconSize = isDark ? 12.0 : 8.0;
                       return Marker(
                         point: LatLng(stop.latitude, stop.longitude),
-                        width: stopSize,
-                        height: stopSize,
-                        child: Container(
-                          width: stopSize,
-                          height: stopSize,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.slate800 : Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.9)
-                                  : widget.line.routeColor,
-                              width: isDark ? 2.5 : 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.5)
-                                    : widget.line.routeColor.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                blurRadius: isDark ? 8 : 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.circle,
-                            color: isDark
-                                ? Colors.white
-                                : widget.line.routeColor,
-                            size: iconSize,
-                          ),
+                        width: 24,
+                        height: 24,
+                        child: StopMarker(
+                          isDark: isDark,
+                          color: widget.line.routeColor,
+                          size: 20,
                         ),
                       );
                     }),
@@ -308,10 +283,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                         point: LatLng(v.latitude, v.longitude),
                         width: 48,
                         height: 48,
-                        child: BusMarker(
+                        child: VehicleMarker(
                           color: widget.line.routeColor,
                           bearing: v.bearing.toDouble(),
-                          shortName: widget.line.shortName,
                           isDark: isDark,
                         ),
                       );
@@ -329,7 +303,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _MapControlButton(
+                MapControlButton(
                   isDark: isDark,
                   icon: Icons.arrow_back_rounded,
                   onPressed: () => Navigator.of(context).pop(),
@@ -493,104 +467,15 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
           Positioned(
             right: 16,
             bottom: MediaQuery.of(context).padding.bottom + 24,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _MapControlButton(
-                  isDark: isDark,
-                  icon: Icons.route_rounded,
-                  tooltip: 'Centralizar na rota',
-                  onPressed: () => _centerOnRoute(routePoints),
-                ),
-                const SizedBox(height: 12),
-                _MapControlButton(
-                  isDark: isDark,
-                  icon: Icons.my_location_rounded,
-                  tooltip: 'Minha localização',
-                  onPressed: _centerOnUser,
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.slate900 : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.slate900.withValues(
-                          alpha: isDark ? 0.3 : 0.08,
-                        ),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        color: isDark ? Colors.white : AppColors.slate900,
-                        iconSize: 20,
-                        onPressed: _zoomIn,
-                      ),
-                      Container(
-                        height: 1,
-                        width: 24,
-                        color: isDark ? AppColors.slate800 : AppColors.slate200,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        color: isDark ? Colors.white : AppColors.slate900,
-                        iconSize: 20,
-                        onPressed: _zoomOut,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: MapControlsColumn(
+              isDark: isDark,
+              onCenterRoute: () => _centerOnRoute(routePoints),
+              onCenterUser: _centerOnUser,
+              onZoomIn: _zoomIn,
+              onZoomOut: _zoomOut,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MapControlButton extends StatelessWidget {
-  final bool isDark;
-  final IconData icon;
-  final String? tooltip;
-  final VoidCallback onPressed;
-
-  const _MapControlButton({
-    required this.isDark,
-    required this.icon,
-    this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.slate900 : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.slate900.withValues(alpha: isDark ? 0.3 : 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        tooltip: tooltip,
-        color: isDark ? Colors.white : AppColors.slate900,
-        iconSize: 20,
-        onPressed: onPressed,
       ),
     );
   }

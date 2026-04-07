@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../widgets/map/map_controls.dart';
 
 class ArrivalBubble extends StatelessWidget {
   final int minutes;
@@ -176,141 +177,6 @@ class ArrivalBubblesColumn extends StatelessWidget {
           onPressed: onClose,
         ),
       ],
-    );
-  }
-}
-
-class MapControlButton extends StatelessWidget {
-  final bool isDark;
-  final IconData icon;
-  final String? tooltip;
-  final VoidCallback onPressed;
-
-  const MapControlButton({
-    super.key,
-    required this.isDark,
-    required this.icon,
-    this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.slate900 : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.slate900.withValues(alpha: isDark ? 0.3 : 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        tooltip: tooltip,
-        color: isDark ? Colors.white : AppColors.slate900,
-        iconSize: 20,
-        onPressed: onPressed,
-      ),
-    );
-  }
-}
-
-class MapControlsColumn extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onCenterRoute;
-  final VoidCallback onCenterUser;
-  final VoidCallback onCenterStop;
-  final VoidCallback onZoomIn;
-  final VoidCallback onZoomOut;
-  final AnimationController animation;
-
-  const MapControlsColumn({
-    super.key,
-    required this.isDark,
-    required this.onCenterRoute,
-    required this.onCenterUser,
-    required this.onCenterStop,
-    required this.onZoomIn,
-    required this.onZoomOut,
-    required this.animation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(-1, 0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MapControlButton(
-            isDark: isDark,
-            icon: Icons.route_rounded,
-            tooltip: 'Centralizar na rota',
-            onPressed: onCenterRoute,
-          ),
-          const SizedBox(height: 12),
-          MapControlButton(
-            isDark: isDark,
-            icon: Icons.my_location_rounded,
-            tooltip: 'Minha localização',
-            onPressed: onCenterUser,
-          ),
-          const SizedBox(height: 12),
-          MapControlButton(
-            isDark: isDark,
-            icon: Icons.place_rounded,
-            tooltip: 'Centralizar na parada',
-            onPressed: onCenterStop,
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: 48,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.slate900 : Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.slate900.withValues(
-                    alpha: isDark ? 0.3 : 0.08,
-                  ),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  color: isDark ? Colors.white : AppColors.slate900,
-                  iconSize: 20,
-                  onPressed: onZoomIn,
-                ),
-                Container(
-                  height: 1,
-                  width: 24,
-                  color: isDark ? AppColors.slate800 : AppColors.slate200,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  color: isDark ? Colors.white : AppColors.slate900,
-                  iconSize: 20,
-                  onPressed: onZoomOut,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

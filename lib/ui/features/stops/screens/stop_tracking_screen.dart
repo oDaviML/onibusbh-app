@@ -12,8 +12,10 @@ import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../../data/providers/stop_providers.dart';
-import '../../../widgets/bus_marker.dart';
-import '../../../widgets/user_location_marker.dart';
+import '../../../widgets/markers/stop_marker.dart';
+import '../../../widgets/markers/vehicle_marker.dart';
+import '../../../widgets/markers/user_location_marker.dart';
+import '../../../widgets/map/map_controls.dart';
 import '../widgets/arrival_bubbles.dart';
 
 class StopTrackingScreen extends ConsumerStatefulWidget {
@@ -62,7 +64,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   }
 
   void _startPolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       ref.invalidate(
         lineVehiclesProvider((
           lineId: widget.prediction.routeId,
@@ -70,7 +72,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
         )),
       );
     });
-    _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       ref.invalidate(stopPredictionsProvider(widget.stop.id));
     });
   }
@@ -286,7 +288,9 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         point: _userLocation!,
                         width: 48,
                         height: 48,
-                        child: UserLocationMarker(size: 16, isDark: isDark),
+                        child: RepaintBoundary(
+                          child: UserLocationMarker(size: 16, isDark: isDark),
+                        ),
                       ),
                     Marker(
                       point: LatLng(
@@ -295,31 +299,11 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                       ),
                       width: 48,
                       height: 48,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.slate800 : Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.9)
-                                : routeColor,
-                            width: isDark ? 3.5 : 3,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDark
-                                  ? Colors.black.withValues(alpha: 0.5)
-                                  : routeColor.withValues(alpha: 0.4),
-                              blurRadius: isDark ? 16 : 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.location_on_rounded,
-                          color: isDark ? Colors.white : routeColor,
-                          size: 26,
-                        ),
+                      child: StopMarker(
+                        isDark: isDark,
+                        color: routeColor,
+                        isSelected: true,
+                        size: 36,
                       ),
                     ),
                     ...vehicles.map(
@@ -327,10 +311,9 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         point: LatLng(v.latitude, v.longitude),
                         width: 48,
                         height: 48,
-                        child: BusMarker(
+                        child: VehicleMarker(
                           color: routeColor,
                           bearing: v.bearing.toDouble(),
-                          shortName: widget.prediction.shortName,
                           isDark: isDark,
                         ),
                       ),
@@ -465,7 +448,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
               onCenterStop: _centerOnStop,
               onZoomIn: _zoomIn,
               onZoomOut: _zoomOut,
-              animation: _controlsAnimController,
+              showStopButton: true,
             ),
           ),
 

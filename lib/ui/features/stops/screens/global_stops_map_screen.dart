@@ -2,16 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
-import '../../../widgets/user_location_marker.dart';
+import '../../../widgets/markers/stop_marker.dart';
+import '../../../widgets/markers/cluster_marker.dart';
+import '../../../widgets/markers/user_location_marker.dart';
+import '../../../widgets/map/map_controls.dart';
 import '../widgets/stop_details_drawer.dart';
 import 'stop_tracking_screen.dart';
 
@@ -31,7 +34,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   StopDto? _selectedStop;
   late final AnimationController _drawerAnimController;
   late final Animation<Offset> _drawerSlideAnimation;
-  late final AnimationController _controlsAnimController;
   Offset? _backdropStartPos;
   bool _backdropMoved = false;
   bool _isMapReady = false;
@@ -51,11 +53,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             reverseCurve: Curves.easeInCubic,
           ),
         );
-    _controlsAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _controlsAnimController.forward();
   }
 
   Future<void> _initLocationService() async {
@@ -128,7 +125,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     _positionStream?.cancel();
     _mapController.dispose();
     _drawerAnimController.dispose();
-    _controlsAnimController.dispose();
     ScaffoldWithNavBar.forceHide.value = false;
     super.dispose();
   }
@@ -276,31 +272,45 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                   subdomains: MapStyles.subdomains,
                   userAgentPackageName: 'com.onibusbh.app',
                 ),
-                MarkerLayer(
-                  markers: [
-                    if (_userLocation != null)
-                      Marker(
-                        point: _userLocation!,
-                        width: 48,
-                        height: 48,
-                        child: UserLocationMarker(size: 16, isDark: isDark),
-                      ),
-                    ...stops.map((stop) {
-                      final isSelected = _selectedStop?.id == stop.id;
-                      return Marker(
-                        point: LatLng(stop.latitude, stop.longitude),
-                        width: isSelected ? 48 : 36,
-                        height: isSelected ? 48 : 36,
-                        child: GestureDetector(
-                          onTap: () => _onStopTapped(stop),
-                          child: _StopMarker(
-                            isDark: isDark,
-                            isSelected: isSelected,
+                MarkerClusterLayerWidget(
+                  options: MarkerClusterLayerOptions(
+                    maxClusterRadius: 100,
+                    disableClusteringAtZoom: 18,
+                    size: const Size(44, 44),
+                    animationsOptions: const AnimationsOptions(),
+                    builder: (context, markers) => ClusterMarker(
+                      count: markers.length,
+                      isDark: isDark,
+                      size: 44,
+                    ),
+                    markers: [
+                      if (_userLocation != null)
+                        Marker(
+                          point: _userLocation!,
+                          width: 48,
+                          height: 48,
+                          child: RepaintBoundary(
+                            child: UserLocationMarker(size: 16, isDark: isDark),
                           ),
                         ),
-                      );
-                    }),
-                  ],
+                      ...stops.map((stop) {
+                        final isSelected = _selectedStop?.id == stop.id;
+                        return Marker(
+                          point: LatLng(stop.latitude, stop.longitude),
+                          width: isSelected ? 48 : 36,
+                          height: isSelected ? 48 : 36,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _onStopTapped(stop),
+                            child: StopMarker(
+                              isDark: isDark,
+                              isSelected: isSelected,
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -338,65 +348,33 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             bottom: _isDrawerOpen
                 ? (MediaQuery.of(context).size.height * 0.55 + 16)
                 : (bottomInset + 20),
-            child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: _controlsAnimController,
-                      curve: Curves.easeOutCubic,
-                    ),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              builder: (context, progress, child) {
+                return Opacity(
+                  opacity: progress,
+                  child: Transform.translate(
+                    offset: Offset(20 * (1 - progress), 0),
+                    child: child,
                   ),
+                );
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _MapControlButton(
+                  MapControlButton(
                     isDark: isDark,
                     icon: Icons.my_location_rounded,
                     tooltip: 'Minha localização',
                     onPressed: _centerOnUser,
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    width: 48,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.slate900 : Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.slate900.withValues(
-                            alpha: isDark ? 0.3 : 0.08,
-                          ),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          color: isDark ? Colors.white : AppColors.slate900,
-                          iconSize: 20,
-                          onPressed: _zoomIn,
-                        ),
-                        Container(
-                          height: 1,
-                          width: 24,
-                          color: isDark
-                              ? AppColors.slate800
-                              : AppColors.slate200,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.remove),
-                          color: isDark ? Colors.white : AppColors.slate900,
-                          iconSize: 20,
-                          onPressed: _zoomOut,
-                        ),
-                      ],
-                    ),
+                  MapZoomControls(
+                    isDark: isDark,
+                    onZoomIn: _zoomIn,
+                    onZoomOut: _zoomOut,
                   ),
                 ],
               ),
@@ -421,98 +399,6 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _MapControlButton extends StatelessWidget {
-  final bool isDark;
-  final IconData icon;
-  final String? tooltip;
-  final VoidCallback onPressed;
-
-  const _MapControlButton({
-    required this.isDark,
-    required this.icon,
-    this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.slate900 : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.slate900.withValues(alpha: isDark ? 0.3 : 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        tooltip: tooltip,
-        color: isDark ? Colors.white : AppColors.slate900,
-        iconSize: 20,
-        onPressed: onPressed,
-      ),
-    );
-  }
-}
-
-class _StopMarker extends StatelessWidget {
-  final bool isDark;
-  final bool isSelected;
-
-  const _StopMarker({required this.isDark, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final size = isSelected ? 40.0 : 32.0;
-    final borderWidth = isSelected ? 3.0 : 2.5;
-    final iconSize = isSelected ? 24.0 : 18.0;
-    final blurRadius = isSelected ? 16.0 : 8.0;
-    final spreadRadius = isSelected ? 2.0 : 0.0;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutBack,
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary
-            : (isDark ? AppColors.slate800 : Colors.white),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isSelected
-              ? Colors.white
-              : (isDark
-                    ? AppColors.primary.withValues(alpha: 0.8)
-                    : AppColors.primary),
-          width: borderWidth,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isSelected
-                ? AppColors.primary.withValues(alpha: 0.6)
-                : AppColors.primary.withValues(alpha: isDark ? 0.4 : 0.25),
-            blurRadius: blurRadius,
-            spreadRadius: spreadRadius,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.location_on_rounded,
-        color: isSelected ? Colors.white : AppColors.primary,
-        size: iconSize,
       ),
     );
   }

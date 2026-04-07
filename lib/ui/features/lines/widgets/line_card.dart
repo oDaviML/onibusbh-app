@@ -130,36 +130,6 @@ class _LineCardState extends ConsumerState<LineCard>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.slate700
-                              : AppColors.slate100,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 12,
-                              color: AppColors.slate500,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${widget.line.stopCount} paradas',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.slate500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
