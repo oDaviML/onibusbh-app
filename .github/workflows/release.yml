@@ -73,8 +73,19 @@ jobs:
             echo "body=Consulte o CHANGELOG.md para detalhes." >> $GITHUB_OUTPUT
           fi
 
+      - name: Compute Flutter version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<EOF
+          $VERSION
+          EOF
+          BUILD_NUMBER=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "name=$VERSION" >> $GITHUB_OUTPUT
+          echo "number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name "${{ steps.version.outputs.name }}" --build-number "${{ steps.version.outputs.number }}"
 
       - name: Rename APK
         run: |
