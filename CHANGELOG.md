@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.0] - 2026-06-11
+
+### Features
+
+- Expandir `LineCard` para exibir variantes disponíveis da linha
+- Tocar no marcador do veículo no mapa para alternar visibilidade da label
+- Exibir label da variante nas previsões (`LinePredictionTile`, `PredictionAccordionTile`)
+- Integrar dados de variantes na `StopTrackingScreen`
+
+### Mudanças de Quebra
+
+- Versão 2.0.0 — mudanças nos modelos de dados de linha e previsão
+
 ## [1.4.0] - 2026-04-07
 
 ### Melhorias

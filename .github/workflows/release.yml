@@ -49,15 +49,15 @@ jobs:
         id: changelog
         run: |
           if [ -f CHANGELOG.md ]; then
-            # Extract version block: from "## [v1.2.0]" to next "## [v" or end of file
             CONTENT=$(awk -v tag="$GITHUB_REF_NAME" '
-              BEGIN { found=0 }
-              /^## \[v[0-9]/ && found { exit }
-              /^## \['"'"''"'"']?v/ { 
-                gsub(/\[|\]|[v'\"']/, "", $0)
-                if (index($0, tag) == 1) { found=1; next }
-                next
+              BEGIN {
+                found = 0
+                version = tag
+                sub(/^v/, "", version)
+                header = "## [" version "]"
               }
+              /^## \[/ && found { exit }
+              index($0, header) == 1 { found=1; next }
               found { print }
             ' CHANGELOG.md | sed '/^$/d' | head -60)
 
