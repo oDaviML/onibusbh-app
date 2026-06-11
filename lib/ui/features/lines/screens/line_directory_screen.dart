@@ -4,7 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/custom_search_bar.dart';
 import '../../../widgets/theme_toggle_button.dart';
-import '../widgets/direction_selection_modal.dart';
 import '../widgets/line_card.dart';
 
 class LineDirectoryScreen extends ConsumerStatefulWidget {
@@ -120,12 +119,7 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
                     )
                   else
                     ...lines.map(
-                      (line) => LineCard(
-                        line: line,
-                        onTap: () {
-                          DirectionSelectionModal.show(context, line);
-                        },
-                      ),
+                      (line) => LineCard(line: line),
                     ),
                   const SizedBox(height: 80),
                 ]),

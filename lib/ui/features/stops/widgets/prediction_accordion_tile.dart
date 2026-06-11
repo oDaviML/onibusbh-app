@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_group.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../../data/models/line_variant_dto.dart';
 
 class PredictionAccordionTile extends StatefulWidget {
   final PredictionGroup group;
@@ -311,6 +312,7 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                               ...prediction.arrivals.take(2).map((arrival) {
                                 final isClose = arrival.etaMinutes <= 5;
                                 final isMedium = arrival.etaMinutes <= 10;
+                                final variantLabel = arrival.variantLabel;
                                 return Container(
                                   margin: const EdgeInsets.only(right: 4),
                                   padding: const EdgeInsets.symmetric(
@@ -340,15 +342,53 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                                                       : AppColors.slate200),
                                           ),
                                   ),
-                                  child: Text(
-                                    '${arrival.etaMinutes}min',
-                                    style: AppTypography.caption.copyWith(
-                                      color: isClose
-                                          ? Colors.white
-                                          : (isMedium
-                                                ? AppColors.primary
-                                                : AppColors.slate500),
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '${arrival.etaMinutes}min',
+                                        style: AppTypography.caption.copyWith(
+                                          color: isClose
+                                              ? Colors.white
+                                              : (isMedium
+                                                    ? AppColors.primary
+                                                    : AppColors.slate500),
+                                        ),
+                                      ),
+                                      if (variantLabel != null &&
+                                          variantLabel != 'PRINCIPAL') ...[
+                                        const SizedBox(width: 3),
+                                        Container(
+                                          width: 1,
+                                          height: 8,
+                                          color: isClose
+                                              ? Colors.white
+                                                  .withValues(alpha: 0.4)
+                                              : (isMedium
+                                                    ? AppColors.primary
+                                                        .withValues(
+                                                          alpha: 0.4,
+                                                        )
+                                                    : AppColors.slate400),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          LineVariantDto.formatLabel(
+                                            variantLabel,
+                                          ),
+                                          style: AppTypography.caption.copyWith(
+                                            color: isClose
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.8,
+                                                  )
+                                                : (isMedium
+                                                      ? AppColors.primary
+                                                      : AppColors.slate500),
+                                            fontSize: 9,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 );
                               }),

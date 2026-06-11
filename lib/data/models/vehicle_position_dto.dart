@@ -8,16 +8,20 @@ class VehiclePositionDto {
   final double latitude;
   final double longitude;
   final int bearing;
-  final int direction;
+  final int directionId;
   final DateTime? timestamp;
+  final String? variantLabel;
+  final String? tripId;
 
   const VehiclePositionDto({
     required this.vehicleId,
     required this.latitude,
     required this.longitude,
     this.bearing = 0,
-    this.direction = 0,
+    this.directionId = 0,
     this.timestamp,
+    this.variantLabel,
+    this.tripId,
   });
 
   factory VehiclePositionDto.fromJson(Map<String, dynamic> json) =>

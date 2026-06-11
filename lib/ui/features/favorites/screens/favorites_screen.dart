@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/favorites_providers.dart';
 import '../../lines/widgets/line_card.dart';
-import '../../lines/widgets/direction_selection_modal.dart';
 import '../../stops/widgets/stop_details_drawer.dart';
 import '../../stops/screens/stop_tracking_screen.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
@@ -198,25 +196,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                           ...favoriteLines.map(
                             (line) => Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),
-                              child: LineCard(
-                                line: line,
-                                onTap: () {
-                                  if (line.isBidirectional) {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) =>
-                                          DirectionSelectionModal(line: line),
-                                    );
-                                  } else {
-                                    context.push(
-                                      '/lines/details',
-                                      extra: {'line': line, 'direction': 1},
-                                    );
-                                  }
-                                },
-                              ),
+                              child: LineCard(line: line),
                             ),
                           ),
                       ] else ...[

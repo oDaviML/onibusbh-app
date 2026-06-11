@@ -13,8 +13,11 @@ LineSummaryDto _$LineSummaryDtoFromJson(Map<String, dynamic> json) =>
       longName: json['longName'] as String,
       color: json['color'] as String?,
       textColor: json['textColor'] as String?,
-      isBidirectional: json['isBidirectional'] as bool? ?? false,
-      stopCount: (json['stopCount'] as num?)?.toInt() ?? 0,
+      directions:
+          (json['directions'] as List<dynamic>?)
+              ?.map((e) => LineDirectionDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       avgTravelTime: (json['avgTravelTime'] as num?)?.toInt() ?? 0,
     );
 
@@ -25,7 +28,6 @@ Map<String, dynamic> _$LineSummaryDtoToJson(LineSummaryDto instance) =>
       'longName': instance.longName,
       'color': instance.color,
       'textColor': instance.textColor,
-      'isBidirectional': instance.isBidirectional,
-      'stopCount': instance.stopCount,
+      'directions': instance.directions,
       'avgTravelTime': instance.avgTravelTime,
     };

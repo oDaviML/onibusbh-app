@@ -16,6 +16,7 @@ ArrivalPredictionDto _$ArrivalPredictionDtoFromJson(
   longitude: (json['longitude'] as num?)?.toDouble(),
   bearing: (json['bearing'] as num?)?.toInt(),
   directionId: (json['directionId'] as num?)?.toInt(),
+  variantLabel: json['variantLabel'] as String?,
 );
 
 Map<String, dynamic> _$ArrivalPredictionDtoToJson(
@@ -28,6 +29,7 @@ Map<String, dynamic> _$ArrivalPredictionDtoToJson(
   'longitude': instance.longitude,
   'bearing': instance.bearing,
   'directionId': instance.directionId,
+  'variantLabel': instance.variantLabel,
 };
 
 PredictionResponseDto _$PredictionResponseDtoFromJson(

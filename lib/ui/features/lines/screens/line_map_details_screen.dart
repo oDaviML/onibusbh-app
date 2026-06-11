@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/line_summary_dto.dart';
+import '../../../../data/models/line_variant_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/markers/stop_marker.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
@@ -16,12 +17,16 @@ import '../../../widgets/map/map_controls.dart';
 
 class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
+  final String tripId;
   final int direction;
+  final String variantLabel;
 
   const LineMapDetailsScreen({
     super.key,
     required this.line,
+    required this.tripId,
     required this.direction,
+    required this.variantLabel,
   });
 
   @override
@@ -57,7 +62,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
       ref.invalidate(
         lineVehiclesProvider((
           lineId: widget.line.routeId,
-          direction: widget.direction,
+          tripId: widget.tripId,
         )),
       );
     });
@@ -195,11 +200,11 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
     final shapeParams = (
       lineId: widget.line.routeId,
-      direction: widget.direction,
+      tripId: widget.tripId,
     );
     final stopsParams = (
       lineId: widget.line.routeId,
-      direction: widget.direction,
+      tripId: widget.tripId,
     );
 
     final shapeAsync = ref.watch(lineShapeProvider(shapeParams));
@@ -207,7 +212,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     final vehiclesAsync = ref.watch(
       lineVehiclesProvider((
         lineId: widget.line.routeId,
-        direction: widget.direction,
+        tripId: widget.tripId,
       )),
     );
 
@@ -385,6 +390,28 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                                       color: AppColors.slate500,
                                     ),
                                   ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      LineVariantDto.formatLabel(
+                                        widget.variantLabel,
+                                      ),
+                                      style: AppTypography.caption.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    ),
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(

@@ -25,7 +25,7 @@ final favoriteStopsProvider =
 
 class FavoritesRepository {
   final SharedPreferences _prefs;
-  static const _linesKey = 'favorite_lines_v1';
+  static const _linesKey = 'favorite_lines_v2';
   static const _stopsKey = 'favorite_stops_v1';
 
   FavoritesRepository(this._prefs);

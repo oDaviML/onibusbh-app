@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../../data/models/line_variant_dto.dart';
 
 class LinePredictionTile extends StatelessWidget {
   final PredictionResponseDto prediction;
@@ -102,6 +103,7 @@ class LinePredictionTile extends StatelessWidget {
                         ...prediction.arrivals.take(3).map((arrival) {
                           final isClose = arrival.etaMinutes <= 5;
                           final isMedium = arrival.etaMinutes <= 10;
+                          final variantLabel = arrival.variantLabel;
                           return Container(
                             margin: const EdgeInsets.only(right: 6),
                             padding: const EdgeInsets.symmetric(
@@ -131,15 +133,46 @@ class LinePredictionTile extends StatelessWidget {
                                                 : AppColors.slate200),
                                     ),
                             ),
-                            child: Text(
-                              '${arrival.etaMinutes}min',
-                              style: AppTypography.caption.copyWith(
-                                color: isClose
-                                    ? Colors.white
-                                    : (isMedium
-                                          ? AppColors.primary
-                                          : AppColors.slate500),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${arrival.etaMinutes}min',
+                                  style: AppTypography.caption.copyWith(
+                                    color: isClose
+                                        ? Colors.white
+                                        : (isMedium
+                                              ? AppColors.primary
+                                              : AppColors.slate500),
+                                  ),
+                                ),
+                                if (variantLabel != null &&
+                                    variantLabel != 'PRINCIPAL') ...[
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 1,
+                                    height: 10,
+                                    color: isClose
+                                        ? Colors.white.withValues(alpha: 0.4)
+                                        : (isMedium
+                                              ? AppColors.primary
+                                                  .withValues(alpha: 0.4)
+                                              : AppColors.slate400),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    LineVariantDto.formatLabel(variantLabel),
+                                    style: AppTypography.caption.copyWith(
+                                      color: isClose
+                                          ? Colors.white.withValues(alpha: 0.8)
+                                          : (isMedium
+                                                ? AppColors.primary
+                                                : AppColors.slate500),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           );
                         }),

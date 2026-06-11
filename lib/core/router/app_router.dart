@@ -27,10 +27,14 @@ class AppRouter {
                     builder: (context, state) {
                       final extra = state.extra as Map<String, dynamic>;
                       final line = extra['line'] as LineSummaryDto;
+                      final tripId = extra['tripId'] as String;
                       final direction = extra['direction'] as int? ?? 0;
+                      final variantLabel = extra['variantLabel'] as String;
                       return LineMapDetailsScreen(
                         line: line,
+                        tripId: tripId,
                         direction: direction,
+                        variantLabel: variantLabel,
                       );
                     },
                   ),

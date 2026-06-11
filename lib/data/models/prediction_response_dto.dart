@@ -13,6 +13,7 @@ class ArrivalPredictionDto {
   final int? bearing;
   @JsonKey(name: 'directionId')
   final int? directionId;
+  final String? variantLabel;
 
   const ArrivalPredictionDto({
     required this.etaMinutes,
@@ -22,6 +23,7 @@ class ArrivalPredictionDto {
     this.longitude,
     this.bearing,
     this.directionId,
+    this.variantLabel,
   });
 
   factory ArrivalPredictionDto.fromJson(Map<String, dynamic> json) =>

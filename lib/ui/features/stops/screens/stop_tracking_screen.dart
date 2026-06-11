@@ -10,9 +10,11 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
+import '../../../../data/models/shape_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/markers/stop_marker.dart';
+import '../../../../data/models/line_variant_dto.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
 import '../../../widgets/map/map_controls.dart';
@@ -66,10 +68,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   void _startPolling() {
     _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       ref.invalidate(
-        lineVehiclesProvider((
-          lineId: widget.prediction.routeId,
-          direction: widget.prediction.direction,
-        )),
+        lineVehiclesProvider((lineId: widget.prediction.routeId, tripId: null)),
       );
     });
     _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
@@ -216,22 +215,34 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final routeColor = widget.prediction.routeColor;
 
-    final shapeAsync = ref.watch(
-      lineShapeProvider((
+    final variantAsync = ref.watch(
+      lineVariantForDirectionProvider((
         lineId: widget.prediction.routeId,
-        direction: widget.prediction.direction,
+        directionId: widget.prediction.direction,
       )),
     );
+    final tripId = variantAsync.value?.tripId;
+
+    final shapeAsync = tripId != null
+        ? ref.watch(
+            lineShapeProvider((
+              lineId: widget.prediction.routeId,
+              tripId: tripId,
+            )),
+          )
+        : const AsyncValue<ShapeDto>.loading();
+
     final vehiclesAsync = ref.watch(
-      lineVehiclesProvider((
-        lineId: widget.prediction.routeId,
-        direction: widget.prediction.direction,
-      )),
+      lineVehiclesProvider((lineId: widget.prediction.routeId, tripId: null)),
     );
     final predictionsAsync = ref.watch(stopPredictionsProvider(widget.stop.id));
 
     final routePoints = shapeAsync.value?.path ?? [];
-    final vehicles = vehiclesAsync.value ?? [];
+    final vehicles =
+        vehiclesAsync.value
+            ?.where((v) => v.directionId == widget.prediction.direction)
+            .toList() ??
+        [];
 
     final predictions = predictionsAsync.value;
     final currentPrediction = predictions?.firstWhere(
@@ -315,6 +326,9 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                           color: routeColor,
                           bearing: v.bearing.toDouble(),
                           isDark: isDark,
+                          label: v.variantLabel != null
+                              ? LineVariantDto.formatLabel(v.variantLabel!)
+                              : null,
                         ),
                       ),
                     ),
