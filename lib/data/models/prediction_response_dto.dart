@@ -42,6 +42,7 @@ class PredictionResponseDto {
   @JsonKey(name: 'directionId')
   final int direction;
   final List<ArrivalPredictionDto> arrivals;
+  final String system;
 
   const PredictionResponseDto({
     required this.routeId,
@@ -51,12 +52,23 @@ class PredictionResponseDto {
     this.headsign,
     this.direction = 0,
     this.arrivals = const [],
+    this.system = 'BHTRANS',
   });
 
+  bool get isMetropolitan =>
+      system.toUpperCase() == 'OTIMO' || routeId.startsWith('otimo_');
+
+  String get shortSystemLabel => isMetropolitan ? 'Ótimo' : 'BHTrans';
+
   Color get routeColor {
-    if (color == null || color!.isEmpty) return const Color(0xFF0F62FE);
-    final hex = color!.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
+    if (color == null || color!.isEmpty) {
+      return isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE);
+    }
+    final hex = color!.replaceFirst('#', '').trim();
+    final parsed = int.tryParse('FF$hex', radix: 16);
+    return parsed != null
+        ? Color(parsed)
+        : (isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE));
   }
 
   int? get nextArrivalMinutes {

@@ -7,6 +7,7 @@ import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/models/prediction_group.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../../data/providers/favorites_providers.dart';
+import '../../../widgets/system_badge.dart';
 import 'line_accordion_tile.dart';
 import 'prediction_accordion_tile.dart';
 
@@ -88,12 +89,21 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'DETALHES DA PARADA',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 1.5,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'DETALHES DA PARADA',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SystemBadge(
+                      isMetropolitan: widget.stop.isMetropolitan,
+                      compact: true,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Row(

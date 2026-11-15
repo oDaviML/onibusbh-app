@@ -19,6 +19,8 @@ LineSummaryDto _$LineSummaryDtoFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const [],
       avgTravelTime: (json['avgTravelTime'] as num?)?.toInt() ?? 0,
+      system: json['system'] as String? ?? 'BHTRANS',
+      price: (json['price'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$LineSummaryDtoToJson(LineSummaryDto instance) =>
@@ -30,4 +32,6 @@ Map<String, dynamic> _$LineSummaryDtoToJson(LineSummaryDto instance) =>
       'textColor': instance.textColor,
       'directions': instance.directions,
       'avgTravelTime': instance.avgTravelTime,
+      'system': instance.system,
+      'price': instance.price,
     };

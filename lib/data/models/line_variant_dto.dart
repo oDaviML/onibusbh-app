@@ -36,6 +36,7 @@ class LineVariantDto {
         'da': 'da',
         'de': 'de',
         'e': 'e',
+        'horario': 'Horário',
       };
       return fixes[lower] ?? '${lower[0].toUpperCase()}${lower.substring(1)}';
     }).toList();

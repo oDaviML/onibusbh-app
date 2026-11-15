@@ -46,6 +46,7 @@ PredictionResponseDto _$PredictionResponseDtoFromJson(
           ?.map((e) => ArrivalPredictionDto.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  system: json['system'] as String? ?? 'BHTRANS',
 );
 
 Map<String, dynamic> _$PredictionResponseDtoToJson(
@@ -58,4 +59,5 @@ Map<String, dynamic> _$PredictionResponseDtoToJson(
   'headsign': instance.headsign,
   'directionId': instance.direction,
   'arrivals': instance.arrivals,
+  'system': instance.system,
 };

@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../widgets/soft_shadow_container.dart';
+import '../../../widgets/system_badge.dart';
 
 class PredictionCard extends StatelessWidget {
   final PredictionResponseDto prediction;
@@ -55,9 +56,19 @@ class PredictionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  prediction.headsign ?? prediction.longName,
-                  style: AppTypography.titleLarge,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        prediction.headsign ?? prediction.longName,
+                        style: AppTypography.titleLarge,
+                      ),
+                    ),
+                    if (prediction.isMetropolitan) ...[
+                      const SizedBox(width: 6),
+                      const SystemBadge(isMetropolitan: true, compact: true),
+                    ],
+                  ],
                 ),
                 if (prediction.arrivals.isNotEmpty)
                   Row(
@@ -94,19 +105,21 @@ class PredictionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '$nextEta',
+                  nextEta <= 0 ? 'Agora' : '$nextEta',
                   style: AppTypography.etaLarge.copyWith(
+                    fontSize: nextEta <= 0 ? 22 : null,
                     color: nextEta <= 5
                         ? AppColors.primary
                         : (isDark ? Colors.white : AppColors.slate900),
                   ),
                 ),
-                Text(
-                  'min',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.slate400,
+                if (nextEta > 0)
+                  Text(
+                    'min',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.slate400,
+                    ),
                   ),
-                ),
               ],
             ),
         ],

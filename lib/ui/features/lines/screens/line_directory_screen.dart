@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/custom_search_bar.dart';
+import '../../../widgets/system_badge.dart';
 import '../../../widgets/theme_toggle_button.dart';
 import '../widgets/line_card.dart';
 
@@ -16,6 +19,7 @@ class LineDirectoryScreen extends ConsumerStatefulWidget {
 
 class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
   String? _searchQuery;
+  String _selectedSystem = 'ALL';
 
   void _onSearchChanged(String query) {
     setState(() {
@@ -23,9 +27,20 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
     });
   }
 
+  List<LineSummaryDto> _applySystemFilter(List<LineSummaryDto> lines) {
+    if (_selectedSystem == 'BHTRANS') {
+      return lines.where((l) => !l.isMetropolitan).toList();
+    }
+    if (_selectedSystem == 'OTIMO') {
+      return lines.where((l) => l.isMetropolitan).toList();
+    }
+    return lines;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final linesAsync = ref.watch(linesProvider(_searchQuery));
 
     return Scaffold(
@@ -84,55 +99,62 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
           ),
 
           SliverPadding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             sliver: linesAsync.when(
-              data: (lines) => SliverList(
-                delegate: SliverChildListDelegate([
-                  Text(
-                    'LINHAS DISPONÍVEIS',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (lines.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 48),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.search_off_rounded,
-                              size: 48,
-                              color: AppColors.slate400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Nenhuma linha encontrada',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: AppColors.slate500,
-                              ),
-                            ),
-                          ],
-                        ),
+              data: (lines) {
+                final filteredLines = _applySystemFilter(lines);
+                return SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildFilterRow(isDark),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${filteredLines.length} LINHAS DISPONÍVEIS',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        letterSpacing: 1.5,
                       ),
-                    )
-                  else
-                    ...lines.map(
-                      (line) => LineCard(line: line),
                     ),
-                  const SizedBox(height: 80),
-                ]),
-              ),
+                    const SizedBox(height: 12),
+                    if (filteredLines.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 48),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 48,
+                                color: AppColors.slate400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Nenhuma linha encontrada',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.slate500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ...filteredLines.map(
+                        (line) => LineCard(line: line),
+                      ),
+                    const SizedBox(height: 80),
+                  ]),
+                );
+              },
               loading: () => SliverList(
                 delegate: SliverChildListDelegate([
+                  _buildFilterRow(isDark),
+                  const SizedBox(height: 12),
                   Text(
                     'LINHAS DISPONÍVEIS',
                     style: theme.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   ...List.generate(4, (_) => _buildShimmerCard(context)),
                 ]),
               ),
@@ -179,6 +201,49 @@ class _LineDirectoryScreenState extends ConsumerState<LineDirectoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterRow(bool isDark) {
+    final options = <({String key, String label, Color color})>[
+      (key: 'ALL', label: 'Todos', color: AppColors.primary),
+      (key: 'BHTRANS', label: 'Municipal · BHTrans', color: AppColors.primary),
+      (
+        key: 'OTIMO',
+        label: 'Metropolitano · Ótimo',
+        color: SystemBadge.metropolitanColor,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: options.map((opt) {
+          final selected = _selectedSystem == opt.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(opt.label),
+              selected: selected,
+              onSelected: (_) => setState(() => _selectedSystem = opt.key),
+              selectedColor: opt.color.withValues(alpha: 0.14),
+              backgroundColor: isDark ? AppColors.slate800 : Colors.white,
+              labelStyle: AppTypography.labelMedium.copyWith(
+                fontSize: 12,
+                color: selected
+                    ? opt.color
+                    : (isDark ? AppColors.slate300 : AppColors.slate600),
+              ),
+              side: BorderSide(
+                color: selected
+                    ? opt.color
+                    : (isDark ? AppColors.slate700 : AppColors.slate200),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+          );
+        }).toList(),
       ),
     );
   }

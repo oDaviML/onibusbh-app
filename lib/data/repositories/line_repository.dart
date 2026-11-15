@@ -31,12 +31,14 @@ class LineRepository {
     return baseResponse.data ?? [];
   }
 
-  Future<List<LineSummaryDto>> searchLines({String? query}) async {
+  Future<List<LineSummaryDto>> searchLines({String? query, String? system}) async {
+    final queryParams = <String, dynamic>{};
+    if (query != null && query.isNotEmpty) queryParams['query'] = query;
+    if (system != null && system.isNotEmpty) queryParams['system'] = system;
+
     final response = await _client.get<Map<String, dynamic>>(
       ApiEndpoints.lines,
-      queryParameters: query != null && query.isNotEmpty
-          ? {'query': query}
-          : null,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
 
     final baseResponse = BaseResponse<List<LineSummaryDto>>.fromJson(

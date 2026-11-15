@@ -6,11 +6,14 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/map_styles.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/scaffold_with_nav_bar.dart';
+import '../../../widgets/system_badge.dart';
 import '../../../widgets/markers/stop_marker.dart';
 import '../../../widgets/markers/cluster_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
@@ -37,6 +40,7 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
   Offset? _backdropStartPos;
   bool _backdropMoved = false;
   bool _isMapReady = false;
+  double _currentZoom = 14.0;
 
   @override
   void initState() {
@@ -263,15 +267,14 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                 ),
                 onMapReady: _onMapReady,
                 onPositionChanged: (position, hasGesture) {
+                  if ((position.zoom - _currentZoom).abs() > 0.05) {
+                    setState(() => _currentZoom = position.zoom);
+                  }
                   _onMapMoved();
                 },
               ),
               children: [
-                TileLayer(
-                  urlTemplate: MapStyles.getTileUrl(isDark),
-                  subdomains: MapStyles.subdomains,
-                  userAgentPackageName: 'com.onibusbh.app',
-                ),
+                MapStyles.buildTileLayer(isDark: isDark),
                 MarkerClusterLayerWidget(
                   options: MarkerClusterLayerOptions(
                     maxClusterRadius: 100,
@@ -305,6 +308,9 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                             child: StopMarker(
                               isDark: isDark,
                               isSelected: isSelected,
+                              color: stop.isMetropolitan
+                                  ? SystemBadge.metropolitanColor
+                                  : AppColors.primary,
                             ),
                           ),
                         );
@@ -315,6 +321,51 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
               ],
             ),
           ),
+
+          if (_currentZoom < 14.0 && !_isDrawerOpen)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 24,
+              right: 24,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.slate900.withValues(alpha: 0.92)
+                        : Colors.white.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.zoom_in_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Aproxime o mapa para ver os pontos',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: isDark ? Colors.white : AppColors.slate800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           if (_isDrawerOpen)
             Positioned.fill(

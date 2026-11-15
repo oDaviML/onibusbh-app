@@ -30,11 +30,13 @@ class AppRouter {
                       final tripId = extra['tripId'] as String;
                       final direction = extra['direction'] as int? ?? 0;
                       final variantLabel = extra['variantLabel'] as String;
+                      final initialTabIndex = extra['initialTabIndex'] as int? ?? 0;
                       return LineMapDetailsScreen(
                         line: line,
                         tripId: tripId,
                         direction: direction,
                         variantLabel: variantLabel,
+                        initialTabIndex: initialTabIndex,
                       );
                     },
                   ),

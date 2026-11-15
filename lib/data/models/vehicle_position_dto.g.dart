@@ -18,6 +18,7 @@ VehiclePositionDto _$VehiclePositionDtoFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['timestamp'] as String),
       variantLabel: json['variantLabel'] as String?,
       tripId: json['tripId'] as String?,
+      currentStopSequence: (json['currentStopSequence'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$VehiclePositionDtoToJson(VehiclePositionDto instance) =>
@@ -30,4 +31,5 @@ Map<String, dynamic> _$VehiclePositionDtoToJson(VehiclePositionDto instance) =>
       'timestamp': instance.timestamp?.toIso8601String(),
       'variantLabel': instance.variantLabel,
       'tripId': instance.tripId,
+      'currentStopSequence': instance.currentStopSequence,
     };

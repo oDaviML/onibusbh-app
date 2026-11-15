@@ -273,11 +273,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                 ),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: MapStyles.getTileUrl(isDark),
-                  subdomains: MapStyles.subdomains,
-                  userAgentPackageName: 'com.onibusbh.app',
-                ),
+                MapStyles.buildTileLayer(isDark: isDark),
                 if (routePoints.isNotEmpty)
                   PolylineLayer(
                     polylines: [

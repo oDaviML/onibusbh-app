@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/models/line_variant_dto.dart';
+import '../../../widgets/system_badge.dart';
 
 class LinePredictionTile extends StatelessWidget {
   final PredictionResponseDto prediction;
@@ -73,13 +74,23 @@ class LinePredictionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    prediction.headsign ?? prediction.longName,
-                    style: AppTypography.titleMedium.copyWith(
-                      color: isDark ? Colors.white : AppColors.slate900,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          prediction.headsign ?? prediction.longName,
+                          style: AppTypography.titleMedium.copyWith(
+                            color: isDark ? Colors.white : AppColors.slate900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (prediction.isMetropolitan) ...[
+                        const SizedBox(width: 6),
+                        const SystemBadge(isMetropolitan: true, compact: true),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Row(
@@ -137,7 +148,9 @@ class LinePredictionTile extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '${arrival.etaMinutes}min',
+                                  arrival.etaMinutes <= 0
+                                      ? 'Agora'
+                                      : '${arrival.etaMinutes}min',
                                   style: AppTypography.caption.copyWith(
                                     color: isClose
                                         ? Colors.white

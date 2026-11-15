@@ -6,6 +6,7 @@ class PredictionGroup {
   final String shortName;
   final String longName;
   final String? color;
+  final String system;
   final Map<int, PredictionResponseDto> directions;
 
   const PredictionGroup({
@@ -13,15 +14,26 @@ class PredictionGroup {
     required this.shortName,
     required this.longName,
     this.color,
+    this.system = 'BHTRANS',
     required this.directions,
   });
 
   bool get isGrouped => directions.length > 1;
 
+  bool get isMetropolitan =>
+      system.toUpperCase() == 'OTIMO' || routeId.startsWith('otimo_');
+
+  String get shortSystemLabel => isMetropolitan ? 'Ótimo' : 'BHTrans';
+
   Color get routeColor {
-    if (color == null || color!.isEmpty) return const Color(0xFF0F62FE);
-    final hex = color!.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
+    if (color == null || color!.isEmpty) {
+      return isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE);
+    }
+    final hex = color!.replaceFirst('#', '').trim();
+    final parsed = int.tryParse('FF$hex', radix: 16);
+    return parsed != null
+        ? Color(parsed)
+        : (isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE));
   }
 
   List<ArrivalPredictionDto> get allArrivals {
@@ -55,6 +67,7 @@ class PredictionGroup {
           shortName: existing.shortName,
           longName: existing.longName,
           color: existing.color,
+          system: existing.system,
           directions: merged,
         );
       } else {
@@ -63,6 +76,7 @@ class PredictionGroup {
           shortName: prediction.shortName,
           longName: prediction.longName,
           color: prediction.color,
+          system: prediction.system,
           directions: {prediction.direction: prediction},
         );
       }

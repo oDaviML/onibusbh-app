@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0] - 2026-11-15
+
+### Features
+
+- Adicionar aba **Itinerário** nos detalhes da linha com visualização **Parada a Parada** e **Rua por Rua**, busca no trajeto e posição dos ônibus em tempo real
+- Integrar linhas e paradas metropolitanas do **Ótimo (RMBH)** junto às linhas municipais da **BHTrans**, com filtro por sistema e badges visuais
+- Permitir abrir o mapa e o itinerário de qualquer linha/variante mesmo sem veículos ativos no momento
+
+### Bug Fixes
+
+- Corrigir carregamento dos mapas substituindo tiles CartoDB (erro de API Key) por OpenStreetMap com suporte a tema escuro
+- Melhorar precisão das previsões de chegada (ETA) e exibir `'Agora'` quando o ônibus está chegando (`<= 0 min`)
+
 ## [2.0.0] - 2026-06-11
 
 ### Features

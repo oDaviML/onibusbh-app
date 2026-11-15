@@ -58,9 +58,9 @@ class ArrivalBubble extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '$minutes',
+              minutes <= 0 ? 'Agora' : '$minutes',
               style: AppTypography.quicksand.copyWith(
-                fontSize: fontSize,
+                fontSize: minutes <= 0 ? size * 0.24 : fontSize,
                 fontWeight: FontWeight.w800,
                 color: isPrimary
                     ? Colors.white
@@ -68,17 +68,18 @@ class ArrivalBubble extends StatelessWidget {
                 height: 1.0,
               ),
             ),
-            Text(
-              'MIN',
-              style: AppTypography.nunito.copyWith(
-                fontSize: labelSize,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-                color: isPrimary
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : AppColors.slate400,
+            if (minutes > 0)
+              Text(
+                'MIN',
+                style: AppTypography.nunito.copyWith(
+                  fontSize: labelSize,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: isPrimary
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : AppColors.slate400,
+                ),
               ),
-            ),
           ],
         ),
       ),

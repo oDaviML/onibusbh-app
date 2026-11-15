@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/prediction_group.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/models/line_variant_dto.dart';
+import '../../../widgets/system_badge.dart';
 
 class PredictionAccordionTile extends StatefulWidget {
   final PredictionGroup group;
@@ -118,13 +119,28 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          group.longName,
-                          style: AppTypography.titleMedium.copyWith(
-                            color: isDark ? Colors.white : AppColors.slate900,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                group.longName,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.slate900,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (group.isMetropolitan) ...[
+                              const SizedBox(width: 6),
+                              const SystemBadge(
+                                isMetropolitan: true,
+                                compact: true,
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -180,7 +196,9 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                                           ),
                                   ),
                                   child: Text(
-                                    '${arrival.etaMinutes}min',
+                                    arrival.etaMinutes <= 0
+                                        ? 'Agora'
+                                        : '${arrival.etaMinutes}min',
                                     style: AppTypography.caption.copyWith(
                                       color: isClose
                                           ? Colors.white
@@ -346,7 +364,9 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        '${arrival.etaMinutes}min',
+                                        arrival.etaMinutes <= 0
+                                            ? 'Agora'
+                                            : '${arrival.etaMinutes}min',
                                         style: AppTypography.caption.copyWith(
                                           color: isClose
                                               ? Colors.white

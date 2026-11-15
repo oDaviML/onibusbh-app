@@ -12,6 +12,7 @@ class VehiclePositionDto {
   final DateTime? timestamp;
   final String? variantLabel;
   final String? tripId;
+  final int? currentStopSequence;
 
   const VehiclePositionDto({
     required this.vehicleId,
@@ -22,6 +23,7 @@ class VehiclePositionDto {
     this.timestamp,
     this.variantLabel,
     this.tripId,
+    this.currentStopSequence,
   });
 
   factory VehiclePositionDto.fromJson(Map<String, dynamic> json) =>

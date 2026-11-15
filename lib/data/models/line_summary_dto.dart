@@ -14,6 +14,8 @@ class LineSummaryDto {
   final String? textColor;
   final List<LineDirectionDto> directions;
   final int avgTravelTime;
+  final String system;
+  final double? price;
 
   const LineSummaryDto({
     required this.routeId,
@@ -23,18 +25,37 @@ class LineSummaryDto {
     this.textColor,
     this.directions = const [],
     this.avgTravelTime = 0,
+    this.system = 'BHTRANS',
+    this.price,
   });
 
+  bool get isMetropolitan => system.toUpperCase() == 'OTIMO';
+
+  String get systemLabel => isMetropolitan ? 'Ótimo · Metropolitano' : 'BHTrans · Municipal';
+
+  String get shortSystemLabel => isMetropolitan ? 'Ótimo' : 'BHTrans';
+
+  String? get formattedPrice {
+    if (price == null || price! <= 0) return null;
+    return 'R\$ ${price!.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
   Color get routeColor {
-    if (color == null || color!.isEmpty) return const Color(0xFF0F62FE);
-    final hex = color!.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
+    if (color == null || color!.isEmpty) {
+      return isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE);
+    }
+    final hex = color!.replaceFirst('#', '').trim();
+    final parsed = int.tryParse('FF$hex', radix: 16);
+    return parsed != null
+        ? Color(parsed)
+        : (isMetropolitan ? const Color(0xFFD97706) : const Color(0xFF0F62FE));
   }
 
   Color get routeTextColor {
     if (textColor == null || textColor!.isEmpty) return Colors.white;
-    final hex = textColor!.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
+    final hex = textColor!.replaceFirst('#', '').trim();
+    final parsed = int.tryParse('FF$hex', radix: 16);
+    return parsed != null ? Color(parsed) : Colors.white;
   }
 
   /// Returns a human-readable label for the line directions.
