@@ -93,7 +93,10 @@ class LinePredictionTile extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (prediction.arrivals.isNotEmpty) ...[
                         Container(
@@ -110,13 +113,11 @@ class LinePredictionTile extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         ...prediction.arrivals.take(3).map((arrival) {
                           final isClose = arrival.etaMinutes <= 5;
                           final isMedium = arrival.etaMinutes <= 10;
                           final variantLabel = arrival.variantLabel;
                           return Container(
-                            margin: const EdgeInsets.only(right: 6),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,

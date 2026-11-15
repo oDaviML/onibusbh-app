@@ -19,6 +19,21 @@ class GitHubRelease {
     return comparableVersion > currentComparableVersion;
   }
 
+  static String normalizeBody(String raw) {
+    if (raw.isEmpty) return '';
+    return raw
+        .replaceAll('%0D%0A', '\n')
+        .replaceAll('%0d%0a', '\n')
+        .replaceAll('%0A', '\n')
+        .replaceAll('%0a', '\n')
+        .replaceAll('%0D', '\n')
+        .replaceAll('%0d', '\n')
+        .replaceAll('%25', '%')
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .trim();
+  }
+
   static GitHubRelease? fromJson(Map<String, dynamic> json) {
     final assets = json['assets'] as List<dynamic>?;
     if (assets == null || assets.isEmpty) return null;
@@ -43,7 +58,7 @@ class GitHubRelease {
     return GitHubRelease(
       tagName: tagName,
       name: json['name'] as String? ?? tagName,
-      body: json['body'] as String? ?? '',
+      body: normalizeBody(json['body'] as String? ?? ''),
       apkDownloadUrl: downloadUrl,
       comparableVersion: comparable,
     );

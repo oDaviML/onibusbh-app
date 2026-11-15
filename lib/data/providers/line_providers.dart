@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
 import '../models/direction_variants_dto.dart';
+import '../models/line_timetable_dto.dart';
 import '../models/line_variant_dto.dart';
 import '../models/line_summary_dto.dart';
 import '../models/shape_dto.dart';
@@ -85,4 +86,10 @@ final lineVariantForDirectionProvider = FutureProvider.autoDispose
       );
       if (direction.variants.isEmpty) return null;
       return direction.variants.first;
+    });
+
+final lineTimetableProvider = FutureProvider.autoDispose
+    .family<LineTimetableDto, String>((ref, lineId) async {
+      final repository = ref.watch(lineRepositoryProvider);
+      return repository.getLineTimetable(lineId);
     });

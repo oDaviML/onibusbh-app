@@ -8,9 +8,11 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/map_styles.dart';
+import '../../../../data/models/line_summary_dto.dart';
 import '../../../../data/models/stop_dto.dart';
 import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/models/shape_dto.dart';
+import '../../../../data/models/vehicle_position_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/markers/stop_marker.dart';
@@ -18,6 +20,7 @@ import '../../../../data/models/line_variant_dto.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
 import '../../../widgets/map/map_controls.dart';
+import '../../lines/screens/line_map_details_screen.dart';
 import '../widgets/arrival_bubbles.dart';
 
 class StopTrackingScreen extends ConsumerStatefulWidget {
@@ -41,6 +44,8 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   StreamSubscription<Position>? _positionStream;
   Timer? _vehicleRefreshTimer;
   Timer? _predictionRefreshTimer;
+  bool _hasAutoFittedVehicles = false;
+  bool _isMapReady = false;
   late final AnimationController _bubblesAnimController;
   late final AnimationController _controlsAnimController;
 
@@ -66,12 +71,12 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   }
 
   void _startPolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       ref.invalidate(
         lineVehiclesProvider((lineId: widget.prediction.routeId, tripId: null)),
       );
     });
-    _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+    _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       ref.invalidate(stopPredictionsProvider(widget.stop.id));
     });
   }
@@ -209,6 +214,67 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     );
   }
 
+  List<VehiclePositionDto> _resolveDisplayVehicles(
+    List<VehiclePositionDto>? apiVehicles,
+    PredictionResponseDto prediction,
+  ) {
+    final matchingApi = (apiVehicles ?? const <VehiclePositionDto>[])
+        .where((v) => v.directionId == prediction.direction)
+        .toList();
+    if (matchingApi.isNotEmpty) {
+      return matchingApi;
+    }
+
+    final seenIds = <String>{};
+    final fallback = <VehiclePositionDto>[];
+    for (final arrival in prediction.arrivals) {
+      if (arrival.latitude == null || arrival.longitude == null) continue;
+      final vid = arrival.vehicleId ?? 'pred_${arrival.etaMinutes}';
+      if (!seenIds.add(vid)) continue;
+      fallback.add(
+        VehiclePositionDto(
+          vehicleId: vid,
+          latitude: arrival.latitude!,
+          longitude: arrival.longitude!,
+          bearing: arrival.bearing ?? 0,
+          directionId: arrival.directionId ?? prediction.direction,
+          variantLabel: arrival.variantLabel,
+        ),
+      );
+    }
+    return fallback;
+  }
+
+  void _fitStopAndClosestVehicle(List<VehiclePositionDto> vehicles) {
+    if (vehicles.isEmpty || !_isMapReady) return;
+    final stopPoint = LatLng(widget.stop.latitude, widget.stop.longitude);
+    const distance = Distance();
+    LatLng closestPoint = LatLng(
+      vehicles.first.latitude,
+      vehicles.first.longitude,
+    );
+    double minMeters = distance.as(LengthUnit.Meter, stopPoint, closestPoint);
+    for (final v in vehicles.skip(1)) {
+      final candidate = LatLng(v.latitude, v.longitude);
+      final meters = distance.as(LengthUnit.Meter, stopPoint, candidate);
+      if (meters < minMeters) {
+        minMeters = meters;
+        closestPoint = candidate;
+      }
+    }
+    if (minMeters < 50) {
+      _animateMapTo(stopPoint, 16.0);
+      return;
+    }
+    final bounds = LatLngBounds.fromPoints([stopPoint, closestPoint]);
+    final fitted = CameraFit.bounds(
+      bounds: bounds,
+      padding: const EdgeInsets.fromLTRB(64, 120, 64, 140),
+      maxZoom: 16.0,
+    ).fit(_mapController.camera);
+    _animateMapTo(fitted.center, fitted.zoom);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -238,22 +304,30 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     final predictionsAsync = ref.watch(stopPredictionsProvider(widget.stop.id));
 
     final routePoints = shapeAsync.value?.path ?? [];
-    final vehicles =
-        vehiclesAsync.value
-            ?.where((v) => v.directionId == widget.prediction.direction)
-            .toList() ??
-        [];
-
     final predictions = predictionsAsync.value;
-    final currentPrediction = predictions?.firstWhere(
-      (p) =>
-          p.routeId == widget.prediction.routeId &&
-          p.direction == widget.prediction.direction,
-      orElse: () => widget.prediction,
+    final currentPrediction =
+        predictions?.firstWhere(
+          (p) =>
+              p.routeId == widget.prediction.routeId &&
+              p.direction == widget.prediction.direction,
+          orElse: () => widget.prediction,
+        ) ??
+        widget.prediction;
+    final vehicles = _resolveDisplayVehicles(
+      vehiclesAsync.value,
+      currentPrediction,
     );
-    final arrivals = (currentPrediction ?? widget.prediction).arrivals
-        .take(3)
-        .toList();
+
+    if (_isMapReady && !_hasAutoFittedVehicles && vehicles.isNotEmpty) {
+      _hasAutoFittedVehicles = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _fitStopAndClosestVehicle(vehicles);
+        }
+      });
+    }
+
+    final arrivals = currentPrediction.arrivals.take(3).toList();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -268,6 +342,11 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                   widget.stop.longitude,
                 ),
                 initialZoom: 16.0,
+                onMapReady: () {
+                  if (mounted) {
+                    setState(() => _isMapReady = true);
+                  }
+                },
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
@@ -422,25 +501,94 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         ],
                       ),
                     ),
-                    if (vehicles.isNotEmpty)
+                    if (vehicles.isNotEmpty) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                          horizontal: 7,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: routeColor.withValues(alpha: 0.15),
+                          color: routeColor.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          '${vehicles.length}',
-                          style: AppTypography.nunito.copyWith(
-                            color: routeColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.directions_bus_rounded,
+                              size: 13,
+                              color: routeColor,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${vehicles.length}',
+                              style: AppTypography.nunito.copyWith(
+                                color: routeColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Material(
+                      color: isDark ? AppColors.slate800 : AppColors.slate100,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LineMapDetailsScreen(
+                                line: LineSummaryDto(
+                                  routeId: widget.prediction.routeId,
+                                  shortName: widget.prediction.shortName,
+                                  longName: widget.prediction.longName,
+                                  color: widget.prediction.color,
+                                  system: widget.prediction.system,
+                                ),
+                                tripId: tripId ?? '',
+                                direction: widget.prediction.direction,
+                                variantLabel:
+                                    variantAsync.value?.variantLabel ??
+                                    'PRINCIPAL',
+                                initialTabIndex: 1,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 13,
+                                color: routeColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Horários',
+                                style: AppTypography.nunito.copyWith(
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.slate800,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),

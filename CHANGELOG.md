@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0] - 2026-11-15
+
+### Features
+
+- Adicionar aba **Horários** (**Quadro de Horários**) nos detalhes da linha para linhas municipais (**BHTrans**) e metropolitanas (**Ótimo**), com filtro por sentido, tipo de dia e destaque das próximas partidas
+- Adicionar atalhos para o quadro de horários nos cards de linhas e no acompanhamento da parada
+
+### Bug Fixes
+
+- Corrigir exibição dos ônibus metropolitanos (**Ótimo**) em tempo real no mapa da linha e no acompanhamento do ponto
+- Melhorar correspondência de viagens e reduzir intervalo de atualização dos ônibus municipais (**BHTrans**) para 10s no mapa
+- Corrigir overflow horizontal dos chips de previsão de chegada nos pontos
+- Corrigir formatação das notas de versão no GitHub Releases e no diálogo de atualização do app
+
 ## [2.1.0] - 2026-11-15
 
 ### Features

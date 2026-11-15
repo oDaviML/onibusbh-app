@@ -66,6 +66,8 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final normalizedBody = GitHubRelease.normalizeBody(widget.release.body);
+
     return AlertDialog(
       icon: Icon(Icons.system_update, size: 48, color: colorScheme.primary),
       title: const Text('Atualização disponível'),
@@ -78,16 +80,13 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 12),
-          if (widget.release.body.isNotEmpty) ...[
-            SizedBox(
-              height: 120,
-              width: double.maxFinite,
-              child: SingleChildScrollView(
-                child: Text(
-                  widget.release.body,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
+          if (normalizedBody.isNotEmpty) ...[
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240),
+              child: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: _buildReleaseNotes(normalizedBody, theme),
                 ),
               ),
             ),
@@ -136,5 +135,116 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
           ),
       ],
     );
+  }
+
+  Widget _buildReleaseNotes(String body, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final baseStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurface.withValues(alpha: 0.8),
+      height: 1.35,
+    );
+    final headingStyle = theme.textTheme.labelLarge?.copyWith(
+      color: colorScheme.primary,
+      fontWeight: FontWeight.w700,
+    );
+
+    final children = <Widget>[];
+    for (final rawLine in body.split('\n')) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+
+      if (line.startsWith('#') || _isStandaloneSectionTitle(line)) {
+        final title = line.replaceFirst(RegExp(r'^#{1,6}\s*'), '').trim();
+        if (title.isEmpty) continue;
+        children.add(
+          Padding(
+            padding: EdgeInsets.only(top: children.isEmpty ? 0 : 8, bottom: 4),
+            child: Text(title, style: headingStyle),
+          ),
+        );
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        final bulletText = line.substring(2).trim();
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '• ',
+                  style: baseStyle?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Expanded(
+                  child: Text.rich(_parseInlineMarkdown(bulletText, baseStyle)),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text.rich(_parseInlineMarkdown(line, baseStyle)),
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
+    );
+  }
+
+  bool _isStandaloneSectionTitle(String line) {
+    const titles = {
+      'features',
+      'bug fixes',
+      'melhorias',
+      'refactoring',
+      'mudanças de quebra',
+      'ci',
+    };
+    return titles.contains(line.toLowerCase());
+  }
+
+  TextSpan _parseInlineMarkdown(String text, TextStyle? baseStyle) {
+    final pattern = RegExp(r'(\*\*.*?\*\*|`[^`]+`)');
+    final spans = <InlineSpan>[];
+    int start = 0;
+
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start)));
+      }
+      final token = match.group(0)!;
+      if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+        final inner = token.substring(2, token.length - 2).replaceAll('`', '');
+        spans.add(
+          TextSpan(
+            text: inner,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        );
+      } else if (token.startsWith('`') &&
+          token.endsWith('`') &&
+          token.length > 2) {
+        spans.add(TextSpan(text: token.substring(1, token.length - 1)));
+      } else {
+        spans.add(TextSpan(text: token));
+      }
+      start = match.end;
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+
+    return TextSpan(style: baseStyle, children: spans);
   }
 }

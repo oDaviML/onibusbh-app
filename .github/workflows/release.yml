@@ -46,10 +46,9 @@ jobs:
           EOF
 
       - name: Extract release notes from CHANGELOG
-        id: changelog
         run: |
           if [ -f CHANGELOG.md ]; then
-            CONTENT=$(awk -v tag="$GITHUB_REF_NAME" '
+            awk -v tag="$GITHUB_REF_NAME" '
               BEGIN {
                 found = 0
                 version = tag
@@ -59,18 +58,10 @@ jobs:
               /^## \[/ && found { exit }
               index($0, header) == 1 { found=1; next }
               found { print }
-            ' CHANGELOG.md | sed '/^$/d' | head -60)
-
-            if [ -n "$CONTENT" ]; then
-              CONTENT="${CONTENT//'%'/'%25'}"
-              CONTENT="${CONTENT//$'\n'/'%0A'}"
-              CONTENT="${CONTENT//$'\r'/'%0D'}"
-              echo "body=$CONTENT" >> $GITHUB_OUTPUT
-            else
-              echo "body=Consulte o CHANGELOG.md para detalhes." >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "body=Consulte o CHANGELOG.md para detalhes." >> $GITHUB_OUTPUT
+            ' CHANGELOG.md | sed '/./,$!d' > release_notes.md
+          fi
+          if [ ! -s release_notes.md ]; then
+            echo "Consulte o CHANGELOG.md para detalhes." > release_notes.md
           fi
 
       - name: Compute Flutter version
@@ -96,7 +87,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Onibus BH ${{ github.ref_name }}"
-          body: ${{ steps.changelog.outputs.body }}
+          body_path: release_notes.md
           files: build/app/outputs/flutter-apk/onibusbh-${{ github.ref_name }}.apk
           draft: false
           prerelease: false

@@ -143,7 +143,10 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (group.allArrivals.isNotEmpty) ...[
                               Container(
@@ -162,12 +165,10 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               ...group.allArrivals.take(3).map((arrival) {
                                 final isClose = arrival.etaMinutes <= 5;
                                 final isMedium = arrival.etaMinutes <= 10;
                                 return Container(
-                                  margin: const EdgeInsets.only(right: 6),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
                                     vertical: 4,
@@ -298,33 +299,39 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                             ),
                             if (prediction.headsign != null) ...[
                               const SizedBox(width: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? AppColors.slate700
-                                      : AppColors.slate100,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  prediction.headsign!,
-                                  style: AppTypography.caption.copyWith(
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isDark
-                                        ? Colors.white
-                                        : AppColors.slate900,
-                                    fontWeight: FontWeight.w700,
+                                        ? AppColors.slate700
+                                        : AppColors.slate100,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    prediction.headsign!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.caption.copyWith(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.slate900,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (prediction.arrivals.isNotEmpty) ...[
                               ...prediction.arrivals.take(2).map((arrival) {
@@ -332,7 +339,6 @@ class _PredictionAccordionTileState extends State<PredictionAccordionTile>
                                 final isMedium = arrival.etaMinutes <= 10;
                                 final variantLabel = arrival.variantLabel;
                                 return Container(
-                                  margin: const EdgeInsets.only(right: 4),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
                                     vertical: 3,

@@ -23,6 +23,7 @@ import '../../../widgets/system_badge.dart';
 import '../../stops/screens/stop_tracking_screen.dart';
 import '../../stops/widgets/stop_details_drawer.dart';
 import '../widgets/line_itinerary_view.dart';
+import '../widgets/line_timetable_view.dart';
 
 class LineMapDetailsScreen extends ConsumerStatefulWidget {
   final LineSummaryDto line;
@@ -62,7 +63,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   @override
   void initState() {
     super.initState();
-    _selectedTabIndex = widget.initialTabIndex.clamp(0, 1);
+    _selectedTabIndex = widget.initialTabIndex.clamp(0, 2);
     _activeTripId = widget.tripId;
     _activeDirection = widget.direction;
     _initLocationService();
@@ -78,7 +79,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   }
 
   void _startVehiclePolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (_activeTripId.isEmpty) return;
       ref.invalidate(
         lineVehiclesProvider((
@@ -314,9 +315,27 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
           )
         : const AsyncValue<List<VehiclePositionDto>>.loading();
 
+    final timetableAsync = ref.watch(lineTimetableProvider(widget.line.routeId));
+
     final routePoints = shapeAsync.value?.path ?? const <LatLng>[];
     final lineStops = stopsAsync.value ?? const <StopDto>[];
     final vehicles = vehiclesAsync.value ?? const <VehiclePositionDto>[];
+
+    String timetableBadge = '';
+    final timetable = timetableAsync.value;
+    if (timetable != null && timetable.directions.isNotEmpty) {
+      final matchedTimetableDir = timetable.directions.firstWhere(
+        (d) => d.directionId == _activeDirection,
+        orElse: () => timetable.directions.first,
+      );
+      final departureCount = matchedTimetableDir.services.fold<int>(
+        0,
+        (sum, service) => sum + service.departures.length,
+      );
+      if (departureCount > 0) {
+        timetableBadge = '$departureCount';
+      }
+    }
 
     if (routePoints.isNotEmpty && !_hasAutoFocused && _isMapReady) {
       _autoFocusOnRoute(routePoints);
@@ -334,6 +353,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             routeColor: routeColor,
             variantOptions: variantOptions,
             vehicleCount: vehicles.length,
+            timetableBadge: timetableBadge,
             stopCount: lineStops.length,
           ),
           Expanded(
@@ -348,6 +368,14 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                   routePoints: routePoints,
                   lineStops: lineStops,
                   vehicles: vehicles,
+                ),
+                LineTimetableView(
+                  line: widget.line,
+                  activeDirectionId: _activeDirection,
+                  timetableAsync: timetableAsync,
+                  onRetry: () => ref.invalidate(
+                    lineTimetableProvider(widget.line.routeId),
+                  ),
                 ),
                 LineItineraryView(
                   line: widget.line,
@@ -402,6 +430,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     required List<({int directionId, String dirLabel, LineVariantDto variant})>
         variantOptions,
     required int vehicleCount,
+    required String timetableBadge,
     required int stopCount,
   }) {
     return Container(
@@ -582,12 +611,22 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                 ),
                 Expanded(
                   child: _MainTabButton(
-                    icon: Icons.route_outlined,
-                    label: 'Itinerário',
-                    badge: '$stopCount',
+                    icon: Icons.schedule_outlined,
+                    label: 'Horários',
+                    badge: timetableBadge,
                     selected: _selectedTabIndex == 1,
                     accentColor: routeColor,
                     onTap: () => setState(() => _selectedTabIndex = 1),
+                  ),
+                ),
+                Expanded(
+                  child: _MainTabButton(
+                    icon: Icons.route_outlined,
+                    label: 'Itinerário',
+                    badge: '$stopCount',
+                    selected: _selectedTabIndex == 2,
+                    accentColor: routeColor,
+                    onTap: () => setState(() => _selectedTabIndex = 2),
                   ),
                 ),
               ],
@@ -804,7 +843,7 @@ class _MainTabButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
           color: selected
               ? (isDark ? AppColors.slate700 : Colors.white)
@@ -820,41 +859,50 @@ class _MainTabButton extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: selected ? accentColor : AppColors.slate400,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTypography.labelMedium.copyWith(
-                color: selected
-                    ? (isDark ? Colors.white : AppColors.slate900)
-                    : AppColors.slate500,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? accentColor : AppColors.slate400,
               ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: selected
-                    ? accentColor.withValues(alpha: 0.15)
-                    : (isDark ? AppColors.slate900 : AppColors.slate200),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                badge,
-                style: AppTypography.caption.copyWith(
-                  fontSize: 10,
-                  color: selected ? accentColor : AppColors.slate500,
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: AppTypography.labelMedium.copyWith(
+                  color: selected
+                      ? (isDark ? Colors.white : AppColors.slate900)
+                      : AppColors.slate500,
                 ),
               ),
-            ),
-          ],
+              if (badge.isNotEmpty) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? accentColor.withValues(alpha: 0.15)
+                        : (isDark ? AppColors.slate900 : AppColors.slate200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    badge,
+                    style: AppTypography.caption.copyWith(
+                      fontSize: 10,
+                      color: selected ? accentColor : AppColors.slate500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

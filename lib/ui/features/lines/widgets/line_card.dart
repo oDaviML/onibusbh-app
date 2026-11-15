@@ -504,7 +504,37 @@ class _LineCardState extends ConsumerState<LineCard>
               onTap: () => _onVariantTap(directionId, variant, initialTabIndex: 1),
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.slate800 : AppColors.slate100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 13,
+                      color: isDark ? AppColors.slate300 : AppColors.slate700,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Horários',
+                      style: AppTypography.caption.copyWith(
+                        color: isDark ? AppColors.slate200 : AppColors.slate700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: () => _onVariantTap(directionId, variant, initialTabIndex: 2),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 decoration: BoxDecoration(
                   color: routeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -513,7 +543,7 @@ class _LineCardState extends ConsumerState<LineCard>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.route_outlined, size: 13, color: routeColor),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     Text(
                       'Itinerário',
                       style: AppTypography.caption.copyWith(

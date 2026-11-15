@@ -1,6 +1,7 @@
 import '../models/base_response.dart';
 import '../models/direction_variants_dto.dart';
 import '../models/line_summary_dto.dart';
+import '../models/line_timetable_dto.dart';
 import '../models/shape_dto.dart';
 import '../models/stop_dto.dart';
 import '../models/vehicle_position_dto.dart';
@@ -129,5 +130,22 @@ class LineRepository {
     }
 
     return baseResponse.data ?? [];
+  }
+
+  Future<LineTimetableDto> getLineTimetable(String lineId) async {
+    final response = await _client.get<Map<String, dynamic>>(
+      ApiEndpoints.lineTimetable(lineId),
+    );
+
+    final baseResponse = BaseResponse<LineTimetableDto>.fromJson(
+      response.data!,
+      (json) => LineTimetableDto.fromJson(json as Map<String, dynamic>),
+    );
+
+    if (baseResponse.isError) {
+      throw Exception(baseResponse.message ?? 'Erro ao buscar horários');
+    }
+
+    return baseResponse.data!;
   }
 }
