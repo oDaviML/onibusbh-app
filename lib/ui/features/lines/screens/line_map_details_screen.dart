@@ -18,6 +18,7 @@ import '../../../../data/providers/line_providers.dart';
 import '../../../widgets/markers/stop_marker.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
+import '../../../widgets/live_pulse_countdown_badge.dart';
 import '../../../widgets/map/map_controls.dart';
 import '../../../widgets/system_badge.dart';
 import '../../stops/screens/stop_tracking_screen.dart';
@@ -48,10 +49,13 @@ class LineMapDetailsScreen extends ConsumerStatefulWidget {
 
 class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     with TickerProviderStateMixin {
+  static const int _refreshIntervalSeconds = 10;
+
   final MapController _mapController = MapController();
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
-  Timer? _vehicleRefreshTimer;
+  Timer? _pollingSecondTimer;
+  int _secondsUntilRefresh = _refreshIntervalSeconds;
   bool _hasAutoFocused = false;
   bool _isMapReady = false;
 
@@ -79,15 +83,26 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   }
 
   void _startVehiclePolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (_activeTripId.isEmpty) return;
-      ref.invalidate(
-        lineVehiclesProvider((
-          lineId: widget.line.routeId,
-          tripId: _activeTripId,
-        )),
-      );
+    _pollingSecondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_secondsUntilRefresh <= 1) {
+        _refreshVehiclesNow();
+      } else {
+        setState(() => _secondsUntilRefresh--);
+      }
     });
+  }
+
+  void _refreshVehiclesNow() {
+    if (!mounted) return;
+    setState(() => _secondsUntilRefresh = _refreshIntervalSeconds);
+    if (_activeTripId.isEmpty) return;
+    ref.invalidate(
+      lineVehiclesProvider((
+        lineId: widget.line.routeId,
+        tripId: _activeTripId,
+      )),
+    );
   }
 
   Future<void> _initLocationService() async {
@@ -130,7 +145,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
   @override
   void dispose() {
-    _vehicleRefreshTimer?.cancel();
+    _pollingSecondTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     super.dispose();
@@ -231,6 +246,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
       _activeTripId = nextTripId;
       _selectedStop = null;
       _hasAutoFocused = false;
+      _secondsUntilRefresh = _refreshIntervalSeconds;
     });
   }
 
@@ -353,6 +369,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
             routeColor: routeColor,
             variantOptions: variantOptions,
             vehicleCount: vehicles.length,
+            isRefreshingVehicles: vehiclesAsync.isRefreshing,
             timetableBadge: timetableBadge,
             stopCount: lineStops.length,
           ),
@@ -430,6 +447,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     required List<({int directionId, String dirLabel, LineVariantDto variant})>
         variantOptions,
     required int vehicleCount,
+    required bool isRefreshingVehicles,
     required String timetableBadge,
     required int stopCount,
   }) {
@@ -549,6 +567,15 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              LivePulseCountdownBadge(
+                remainingSeconds: _secondsUntilRefresh,
+                totalSeconds: _refreshIntervalSeconds,
+                isRefreshing: isRefreshingVehicles,
+                accentColor: routeColor,
+                isDark: isDark,
+                onTap: _refreshVehiclesNow,
               ),
             ],
           ),
@@ -728,6 +755,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
                   }),
                   ...vehicles.map((v) {
                     return Marker(
+                      key: ValueKey(
+                        '${v.vehicleId}_${v.latitude}_${v.longitude}_${v.bearing}',
+                      ),
                       point: LatLng(v.latitude, v.longitude),
                       width: 48,
                       height: 48,

@@ -8,6 +8,7 @@ import 'package:onibusbh/data/models/stop_dto.dart';
 import 'package:onibusbh/data/models/vehicle_position_dto.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_itinerary_view.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_timetable_view.dart';
+import 'package:onibusbh/ui/widgets/live_pulse_countdown_badge.dart';
 import 'package:onibusbh/ui/widgets/update_dialog.dart';
 
 void main() {
@@ -311,6 +312,57 @@ void main() {
         expect(find.text('Exibir Agora quando <= 0 min'), findsOneWidget);
         expect(find.textContaining('%0A'), findsNothing);
         expect(find.textContaining('###'), findsNothing);
+      },
+    );
+  });
+
+  group('LivePulseCountdownBadge', () {
+    testWidgets(
+      'displays vehicle count, countdown seconds and invokes onTap',
+      (tester) async {
+        int tapped = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: LivePulseCountdownBadge(
+                remainingSeconds: 7,
+                totalSeconds: 10,
+                accentColor: const Color(0xFF0F62FE),
+                isDark: false,
+                vehicleCount: 4,
+                onTap: () => tapped++,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('4 · 7s'), findsOneWidget);
+        expect(find.byIcon(Icons.directions_bus_rounded), findsOneWidget);
+
+        await tester.tap(find.byType(LivePulseCountdownBadge));
+        await tester.pump();
+        expect(tapped, 1);
+      },
+    );
+
+    testWidgets(
+      'displays compact countdown without vehicle count when omitted',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: LivePulseCountdownBadge(
+                remainingSeconds: 12,
+                totalSeconds: 15,
+                accentColor: Color(0xFF0F62FE),
+                isDark: true,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('12s'), findsOneWidget);
+        expect(find.byIcon(Icons.directions_bus_rounded), findsNothing);
       },
     );
   });

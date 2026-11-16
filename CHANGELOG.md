@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.1] - 2026-11-15
+
+### Features
+
+- Adicionar indicador visual com contagem regressiva de atualização em tempo real (`LivePulseCountdownBadge`) e recarregamento com 1 toque nas telas de acompanhamento da linha, acompanhamento da parada e gaveta da parada
+
+### Bug Fixes
+
+- Atualizar automaticamente posições dos ônibus no mapa e previsões dos próximos horários a cada 10s sem precisar sair e entrar da tela
+- Corrigir atualização das posições e direções dos marcadores de veículos no mapa a cada polling
+
 ## [2.2.0] - 2026-11-15
 
 ### Features

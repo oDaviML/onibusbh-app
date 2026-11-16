@@ -19,6 +19,7 @@ import '../../../widgets/markers/stop_marker.dart';
 import '../../../../data/models/line_variant_dto.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
+import '../../../widgets/live_pulse_countdown_badge.dart';
 import '../../../widgets/map/map_controls.dart';
 import '../../lines/screens/line_map_details_screen.dart';
 import '../widgets/arrival_bubbles.dart';
@@ -39,11 +40,13 @@ class StopTrackingScreen extends ConsumerStatefulWidget {
 
 class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     with TickerProviderStateMixin {
+  static const int _refreshIntervalSeconds = 10;
+
   final MapController _mapController = MapController();
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
-  Timer? _vehicleRefreshTimer;
-  Timer? _predictionRefreshTimer;
+  Timer? _pollingSecondTimer;
+  int _secondsUntilRefresh = _refreshIntervalSeconds;
   bool _hasAutoFittedVehicles = false;
   bool _isMapReady = false;
   late final AnimationController _bubblesAnimController;
@@ -71,14 +74,23 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   }
 
   void _startPolling() {
-    _vehicleRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      ref.invalidate(
-        lineVehiclesProvider((lineId: widget.prediction.routeId, tripId: null)),
-      );
+    _pollingSecondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_secondsUntilRefresh <= 1) {
+        _refreshNow();
+      } else {
+        setState(() => _secondsUntilRefresh--);
+      }
     });
-    _predictionRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      ref.invalidate(stopPredictionsProvider(widget.stop.id));
-    });
+  }
+
+  void _refreshNow() {
+    if (!mounted) return;
+    setState(() => _secondsUntilRefresh = _refreshIntervalSeconds);
+    ref.invalidate(
+      lineVehiclesProvider((lineId: widget.prediction.routeId, tripId: null)),
+    );
+    ref.invalidate(stopPredictionsProvider(widget.stop.id));
   }
 
   Future<void> _initLocationService() async {
@@ -121,8 +133,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
 
   @override
   void dispose() {
-    _vehicleRefreshTimer?.cancel();
-    _predictionRefreshTimer?.cancel();
+    _pollingSecondTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
     _bubblesAnimController.dispose();
@@ -218,11 +229,15 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     List<VehiclePositionDto>? apiVehicles,
     PredictionResponseDto prediction,
   ) {
-    final matchingApi = (apiVehicles ?? const <VehiclePositionDto>[])
+    final allApi = apiVehicles ?? const <VehiclePositionDto>[];
+    final matchingApi = allApi
         .where((v) => v.directionId == prediction.direction)
         .toList();
     if (matchingApi.isNotEmpty) {
       return matchingApi;
+    }
+    if (allApi.isNotEmpty) {
+      return allApi;
     }
 
     final seenIds = <String>{};
@@ -394,6 +409,9 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                     ),
                     ...vehicles.map(
                       (v) => Marker(
+                        key: ValueKey(
+                          '${v.vehicleId}_${v.latitude}_${v.longitude}_${v.bearing}',
+                        ),
                         point: LatLng(v.latitude, v.longitude),
                         width: 48,
                         height: 48,
@@ -417,7 +435,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            right: 100,
+            right: 16,
             child: SlideTransition(
               position:
                   Tween<Offset>(
@@ -501,38 +519,19 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                         ],
                       ),
                     ),
-                    if (vehicles.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: routeColor.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.directions_bus_rounded,
-                              size: 13,
-                              color: routeColor,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${vehicles.length}',
-                              style: AppTypography.nunito.copyWith(
-                                color: routeColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
+                    const SizedBox(width: 6),
+                    LivePulseCountdownBadge(
+                      remainingSeconds: _secondsUntilRefresh,
+                      totalSeconds: _refreshIntervalSeconds,
+                      isRefreshing:
+                          vehiclesAsync.isRefreshing ||
+                          predictionsAsync.isRefreshing,
+                      accentColor: routeColor,
+                      isDark: isDark,
+                      vehicleCount: vehicles.length,
+                      onTap: _refreshNow,
+                    ),
+                    const SizedBox(width: 6),
                     Material(
                       color: isDark ? AppColors.slate800 : AppColors.slate100,
                       borderRadius: BorderRadius.circular(10),

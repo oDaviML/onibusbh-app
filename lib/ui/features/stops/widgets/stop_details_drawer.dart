@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,6 +9,7 @@ import '../../../../data/models/prediction_response_dto.dart';
 import '../../../../data/models/prediction_group.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../../data/providers/favorites_providers.dart';
+import '../../../widgets/live_pulse_countdown_badge.dart';
 import '../../../widgets/system_badge.dart';
 import 'line_accordion_tile.dart';
 import 'prediction_accordion_tile.dart';
@@ -23,8 +26,11 @@ class StopDetailsDrawer extends ConsumerStatefulWidget {
 
 class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
     with SingleTickerProviderStateMixin {
+  static const int _refreshIntervalSeconds = 15;
   late final AnimationController _heartController;
   late final Animation<double> _heartScale;
+  Timer? _countdownTimer;
+  int _secondsUntilRefresh = _refreshIntervalSeconds;
 
   @override
   void initState() {
@@ -40,10 +46,29 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
         ]).animate(
           CurvedAnimation(parent: _heartController, curve: Curves.easeInOut),
         );
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_secondsUntilRefresh <= 1) {
+        _refreshPredictionsNow();
+      } else {
+        setState(() => _secondsUntilRefresh--);
+      }
+    });
+  }
+
+  void _refreshPredictionsNow() {
+    if (!mounted) return;
+    setState(() => _secondsUntilRefresh = _refreshIntervalSeconds);
+    ref.invalidate(stopPredictionsProvider(widget.stop.id));
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _heartController.dispose();
     super.dispose();
   }
@@ -182,11 +207,21 @@ class _StopDetailsDrawerState extends ConsumerState<StopDetailsDrawer>
                             color: AppColors.slate400,
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            '${groups.length} linhas nesta parada',
-                            style: AppTypography.labelMedium.copyWith(
-                              color: AppColors.slate400,
+                          Expanded(
+                            child: Text(
+                              '${groups.length} linhas nesta parada',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.slate400,
+                              ),
                             ),
+                          ),
+                          LivePulseCountdownBadge(
+                            remainingSeconds: _secondsUntilRefresh,
+                            totalSeconds: _refreshIntervalSeconds,
+                            isRefreshing: predictionsAsync.isRefreshing,
+                            accentColor: AppColors.primary,
+                            isDark: isDark,
+                            onTap: _refreshPredictionsNow,
                           ),
                         ],
                       ),
