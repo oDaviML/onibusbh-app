@@ -359,65 +359,90 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
     final variantOptions = _flattenVariantOptions(directions);
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: Column(
-        children: [
-          _buildTopHeader(
-            context: context,
-            isDark: isDark,
-            routeColor: routeColor,
-            variantOptions: variantOptions,
-            vehicleCount: vehicles.length,
-            isRefreshingVehicles: vehiclesAsync.isRefreshing,
-            timetableBadge: timetableBadge,
-            stopCount: lineStops.length,
+    final canPopDirectly = !(_selectedTabIndex == 0 && _selectedStop != null);
+
+    final popContent = PopScope(
+      canPop: canPopDirectly,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _selectedTabIndex == 0 && _selectedStop != null) {
+          setState(() => _selectedStop = null);
+        }
+      },
+      child: Scaffold(
+          backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+          body: Column(
+            children: [
+              _buildTopHeader(
+                context: context,
+                isDark: isDark,
+                routeColor: routeColor,
+                variantOptions: variantOptions,
+                vehicleCount: vehicles.length,
+                isRefreshingVehicles: vehiclesAsync.isRefreshing,
+                timetableBadge: timetableBadge,
+                stopCount: lineStops.length,
+              ),
+              Expanded(
+                child: IndexedStack(
+                  index: _selectedTabIndex,
+                  children: [
+                    _buildMapTab(
+                      isDark: isDark,
+                      routeColor: routeColor,
+                      shapeAsync: shapeAsync,
+                      stopsAsync: stopsAsync,
+                      routePoints: routePoints,
+                      lineStops: lineStops,
+                      vehicles: vehicles,
+                    ),
+                    LineTimetableView(
+                      line: widget.line,
+                      activeDirectionId: _activeDirection,
+                      timetableAsync: timetableAsync,
+                      onRetry: () => ref.invalidate(
+                        lineTimetableProvider(widget.line.routeId),
+                      ),
+                    ),
+                    LineItineraryView(
+                      line: widget.line,
+                      stops: lineStops,
+                      vehicles: vehicles,
+                      isLoading: stopsAsync.isLoading,
+                      error: stopsAsync.hasError ? stopsAsync.error.toString() : null,
+                      onRetry: () {
+                        if (_activeTripId.isNotEmpty) {
+                          ref.invalidate(
+                            lineStopsProvider((
+                              lineId: widget.line.routeId,
+                              tripId: _activeTripId,
+                            )),
+                          );
+                        }
+                      },
+                      onFocusStopOnMap: _focusStopOnMap,
+                      onOpenStopPredictions: _openStopPredictionsSheet,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: IndexedStack(
-              index: _selectedTabIndex,
-              children: [
-                _buildMapTab(
-                  isDark: isDark,
-                  routeColor: routeColor,
-                  shapeAsync: shapeAsync,
-                  stopsAsync: stopsAsync,
-                  routePoints: routePoints,
-                  lineStops: lineStops,
-                  vehicles: vehicles,
-                ),
-                LineTimetableView(
-                  line: widget.line,
-                  activeDirectionId: _activeDirection,
-                  timetableAsync: timetableAsync,
-                  onRetry: () => ref.invalidate(
-                    lineTimetableProvider(widget.line.routeId),
-                  ),
-                ),
-                LineItineraryView(
-                  line: widget.line,
-                  stops: lineStops,
-                  vehicles: vehicles,
-                  isLoading: stopsAsync.isLoading,
-                  error: stopsAsync.hasError ? stopsAsync.error.toString() : null,
-                  onRetry: () {
-                    if (_activeTripId.isNotEmpty) {
-                      ref.invalidate(
-                        lineStopsProvider((
-                          lineId: widget.line.routeId,
-                          tripId: _activeTripId,
-                        )),
-                      );
-                    }
-                  },
-                  onFocusStopOnMap: _focusStopOnMap,
-                  onOpenStopPredictions: _openStopPredictionsSheet,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+    );
+
+    if (Router.maybeOf(context) == null) {
+      return popContent;
+    }
+
+    return BackButtonListener(
+      onBackButtonPressed: () async {
+        if (_selectedTabIndex == 0 && _selectedStop != null) {
+          setState(() => _selectedStop = null);
+          return true;
+        }
+        return false;
+      },
+      child: popContent,
     );
   }
 

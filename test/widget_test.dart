@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:onibusbh/data/models/direction_variants_dto.dart';
 import 'package:onibusbh/data/models/github_release.dart';
+import 'package:onibusbh/data/models/line_direction_dto.dart';
 import 'package:onibusbh/data/models/line_summary_dto.dart';
 import 'package:onibusbh/data/models/line_timetable_dto.dart';
+import 'package:onibusbh/data/models/line_variant_dto.dart';
 import 'package:onibusbh/data/models/stop_dto.dart';
 import 'package:onibusbh/data/models/vehicle_position_dto.dart';
+import 'package:onibusbh/data/providers/favorites_providers.dart';
+import 'package:onibusbh/data/providers/line_providers.dart';
+import 'package:onibusbh/ui/features/lines/widgets/line_card.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_itinerary_view.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_timetable_view.dart';
 import 'package:onibusbh/ui/widgets/live_pulse_countdown_badge.dart';
 import 'package:onibusbh/ui/widgets/update_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('DTO helpers', () {
@@ -363,6 +371,156 @@ void main() {
 
         expect(find.text('12s'), findsOneWidget);
         expect(find.byIcon(Icons.directions_bus_rounded), findsNothing);
+      },
+    );
+  });
+
+  group('LineCard variant formatting', () {
+    testWidgets(
+      'keeps variant names single-line and unbroken on narrow 360px screen',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        const sampleLine = LineSummaryDto(
+          routeId: '4108',
+          shortName: '4108',
+          longName: 'Pedro II/Mangabeiras',
+          color: '0A2E4D',
+          system: 'BHTRANS',
+          directions: [LineDirectionDto(directionId: 0, headsign: 'Estação Ponto São Jose')],
+        );
+
+        const sampleVariants = [
+          DirectionVariantsDto(
+            directionId: 0,
+            headsign: 'Estação Ponto São Jose',
+            variants: [
+              LineVariantDto(
+                variantLabel: 'PRINCIPAL',
+                headsign: 'Estação Ponto São Jose',
+                vehicleCount: 3,
+                tripId: 't1',
+              ),
+              LineVariantDto(
+                variantLabel: 'CARNAVAL',
+                headsign: 'Estação Ponto São Jose',
+                vehicleCount: 0,
+                tripId: 't2',
+              ),
+              LineVariantDto(
+                variantLabel: 'VIA_RUA_VILA_RICA',
+                headsign: 'Estação Ponto São Jose',
+                vehicleCount: 0,
+                tripId: 't3',
+              ),
+              LineVariantDto(
+                variantLabel: 'DESVIO_FEIRA_DA_AVENIDA_AFONSO_PENA',
+                headsign: 'Estação Ponto São Jose',
+                vehicleCount: 0,
+                tripId: 't4',
+              ),
+            ],
+          ),
+        ];
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              lineVariantsProvider('4108').overrideWith(
+                (ref) async => sampleVariants,
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: LineCard(line: sampleLine),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('4108'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Estação Ponto São Jose'), findsWidgets);
+        expect(find.text('Principal'), findsOneWidget);
+        expect(find.text('Carnaval'), findsOneWidget);
+        expect(find.text('Via Rua Vila Rica'), findsOneWidget);
+        expect(find.text('Desvio Feira da Avenida Afonso Pena'), findsOneWidget);
+        expect(find.text('Mapa'), findsNWidgets(4));
+        expect(find.text('Horários'), findsNWidgets(4));
+        expect(find.text('Itinerário'), findsNWidgets(4));
+
+        // Verify short variant labels fit cleanly on 1 line instead of wrapping mid-word
+        expect(tester.getSize(find.text('Principal')).height, lessThan(28));
+        expect(tester.getSize(find.text('Carnaval')).height, lessThan(28));
+      },
+    );
+  });
+
+  group('Back navigation drawer interception', () {
+    testWidgets(
+      'BackButtonListener closes open drawer before allowing route pop',
+      (tester) async {
+        bool drawerOpen = true;
+        int popCount = 0;
+
+        final router = GoRouter(
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, state) => StatefulBuilder(
+                builder: (context, setState) {
+                  return BackButtonListener(
+                    onBackButtonPressed: () async {
+                      if (drawerOpen) {
+                        setState(() => drawerOpen = false);
+                        return true;
+                      }
+                      popCount++;
+                      return true;
+                    },
+                    child: PopScope(
+                      canPop: !drawerOpen,
+                      child: Scaffold(
+                        body: Text(
+                          drawerOpen ? 'Drawer Open' : 'Drawer Closed',
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp.router(routerConfig: router),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Drawer Open'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Drawer Closed'), findsOneWidget);
+        expect(popCount, 0);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(popCount, 1);
       },
     );
   });

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.2] - 2026-11-15
+
+### Bug Fixes
+- Corrigir quebra de texto e continuidade da linha do tempo nas variantes expandidas dos cards de linhas
+- Fechar a gaveta de detalhes da parada ao pressionar o botão Voltar no mapa antes de sair do aplicativo
+
 ## [2.2.1] - 2026-11-15
 
 ### Features

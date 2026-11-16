@@ -253,7 +253,14 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
     final stopsAsync = ref.watch(stopsProvider);
     final stops = stopsAsync.value ?? [];
 
-    return Scaffold(
+    final popContent = PopScope(
+      canPop: !_isDrawerOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isDrawerOpen) {
+          _closeDrawer();
+        }
+      },
+      child: Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
@@ -441,6 +448,11 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
                 position: _drawerSlideAnimation,
                 child: GestureDetector(
                   onTap: () {},
+                  onVerticalDragEnd: (details) {
+                    if ((details.primaryVelocity ?? 0) > 250) {
+                      _closeDrawer();
+                    }
+                  },
                   child: StopDetailsDrawer(
                     key: ValueKey(_selectedStop!.id),
                     stop: _selectedStop!,
@@ -451,6 +463,22 @@ class _GlobalStopsMapScreenState extends ConsumerState<GlobalStopsMapScreen>
             ),
         ],
       ),
+      ),
+    );
+
+    if (Router.maybeOf(context) == null) {
+      return popContent;
+    }
+
+    return BackButtonListener(
+      onBackButtonPressed: () async {
+        if (_isDrawerOpen) {
+          _closeDrawer();
+          return true;
+        }
+        return false;
+      },
+      child: popContent,
     );
   }
 }

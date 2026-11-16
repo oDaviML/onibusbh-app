@@ -368,62 +368,72 @@ class _LineCardState extends ConsumerState<LineCard>
   }) {
     final isDirection = item.type == _TimelineItemType.direction;
     final showBottomLine = !isLast;
+    final lineColor = routeColor.withValues(alpha: 0.3);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 24,
-          child: Column(
-            children: [
-              if (!isFirst)
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                if (isFirst)
+                  SizedBox(height: isDirection ? 6 : 10)
+                else
+                  Container(
+                    width: 2,
+                    height: isDirection ? 6 : 10,
+                    color: lineColor,
+                  ),
                 Container(
-                  width: 2,
-                  height: isDirection ? 10 : 6,
-                  color: routeColor.withValues(alpha: 0.3),
+                  width: isDirection ? 10 : 8,
+                  height: isDirection ? 10 : 8,
+                  decoration: BoxDecoration(
+                    color: isDirection
+                        ? routeColor
+                        : routeColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                    border: isDirection
+                        ? null
+                        : Border.all(color: routeColor, width: 1.5),
+                  ),
                 ),
-              Container(
-                width: isDirection ? 10 : 8,
-                height: isDirection ? 10 : 8,
-                margin: EdgeInsets.symmetric(vertical: isDirection ? 4 : 2),
-                decoration: BoxDecoration(
-                  color: isDirection
-                      ? routeColor
-                      : routeColor.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                  border: isDirection
-                      ? null
-                      : Border.all(color: routeColor, width: 1.5),
-                ),
-              ),
-              if (showBottomLine)
-                Container(
-                  width: 2,
-                  height: 18,
-                  color: routeColor.withValues(alpha: 0.3),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: isDirection ? 6 : 10,
-              top: isDirection ? 2 : 0,
-            ),
-            child: isDirection
-                ? Text(
-                    item.headsign!,
-                    style: AppTypography.labelMedium.copyWith(
-                      color: routeColor,
-                      fontWeight: FontWeight.w700,
+                if (showBottomLine)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      color: lineColor,
                     ),
-                  )
-                : _buildVariantRow(item.variant!, item.directionId, isDark, routeColor),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: isDirection ? 6 : 10,
+                top: isDirection ? 2 : 0,
+              ),
+              child: isDirection
+                  ? Text(
+                      item.headsign!,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: routeColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : _buildVariantRow(
+                      item.variant!,
+                      item.directionId,
+                      isDark,
+                      routeColor,
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -440,119 +450,169 @@ class _LineCardState extends ConsumerState<LineCard>
       borderRadius: BorderRadius.circular(10),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              _variantIcon(variant.variantLabel),
-              size: 16,
-              color: hasVehicles ? routeColor : AppColors.slate400,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    _variantIcon(variant.variantLabel),
+                    size: 16,
+                    color: hasVehicles ? routeColor : AppColors.slate400,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        variant.displayName,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: isDark ? Colors.white : AppColors.slate900,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (variant.headsign != null &&
+                          variant.variantLabel != 'PRINCIPAL')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            variant.headsign!,
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.slate500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasVehicles
+                        ? Colors.green.withValues(alpha: 0.12)
+                        : (isDark ? AppColors.slate800 : AppColors.slate100),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.directions_bus_rounded,
+                        size: 12,
+                        color: hasVehicles ? Colors.green : AppColors.slate400,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${variant.vehicleCount ?? 0}',
+                        style: AppTypography.caption.copyWith(
+                          color: hasVehicles
+                              ? Colors.green.shade700
+                              : AppColors.slate400,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 24),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
                 children: [
-                  Text(
-                    variant.displayName,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? Colors.white : AppColors.slate900,
-                      fontWeight: FontWeight.w600,
+                  _buildVariantActionPill(
+                    icon: Icons.map_outlined,
+                    label: 'Mapa',
+                    iconColor: routeColor,
+                    textColor: routeColor,
+                    backgroundColor: routeColor.withValues(alpha: 0.10),
+                    onTap: () => _onVariantTap(
+                      directionId,
+                      variant,
+                      initialTabIndex: 0,
                     ),
                   ),
-                  if (variant.headsign != null && variant.variantLabel != 'PRINCIPAL')
-                    Text(
-                      variant.headsign!,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.slate500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  _buildVariantActionPill(
+                    icon: Icons.schedule_rounded,
+                    label: 'Horários',
+                    iconColor: isDark
+                        ? AppColors.slate300
+                        : AppColors.slate700,
+                    textColor: isDark
+                        ? AppColors.slate200
+                        : AppColors.slate700,
+                    backgroundColor: isDark
+                        ? AppColors.slate800
+                        : AppColors.slate100,
+                    onTap: () => _onVariantTap(
+                      directionId,
+                      variant,
+                      initialTabIndex: 1,
                     ),
+                  ),
+                  _buildVariantActionPill(
+                    icon: Icons.route_outlined,
+                    label: 'Itinerário',
+                    iconColor: routeColor,
+                    textColor: routeColor,
+                    backgroundColor: routeColor.withValues(alpha: 0.12),
+                    onTap: () => _onVariantTap(
+                      directionId,
+                      variant,
+                      initialTabIndex: 2,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: hasVehicles
-                    ? Colors.green.withValues(alpha: 0.12)
-                    : (isDark ? AppColors.slate800 : AppColors.slate100),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.directions_bus_rounded,
-                    size: 12,
-                    color: hasVehicles ? Colors.green : AppColors.slate400,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '${variant.vehicleCount ?? 0}',
-                    style: AppTypography.caption.copyWith(
-                      color: hasVehicles ? Colors.green.shade700 : AppColors.slate400,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            InkWell(
-              onTap: () => _onVariantTap(directionId, variant, initialTabIndex: 1),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.slate800 : AppColors.slate100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 13,
-                      color: isDark ? AppColors.slate300 : AppColors.slate700,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      'Horários',
-                      style: AppTypography.caption.copyWith(
-                        color: isDark ? AppColors.slate200 : AppColors.slate700,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            InkWell(
-              onTap: () => _onVariantTap(directionId, variant, initialTabIndex: 2),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                decoration: BoxDecoration(
-                  color: routeColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.route_outlined, size: 13, color: routeColor),
-                    const SizedBox(width: 3),
-                    Text(
-                      'Itinerário',
-                      style: AppTypography.caption.copyWith(
-                        color: routeColor,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVariantActionPill({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required Color textColor,
+    required Color backgroundColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: iconColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: textColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
