@@ -38,7 +38,7 @@ class _DirectionSelectionModalState
 
   void _navigateToMap(LineVariantDto variant) {
     Navigator.of(context).pop();
-    context.go('/lines/details', extra: {
+    context.push('/lines/details', extra: {
       'line': widget.line,
       'tripId': variant.tripId ?? '',
       'direction': _selectedDirectionId,

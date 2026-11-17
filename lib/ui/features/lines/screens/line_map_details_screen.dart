@@ -52,6 +52,7 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   static const int _refreshIntervalSeconds = 10;
 
   final MapController _mapController = MapController();
+  AnimationController? _mapMoveController;
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
   Timer? _pollingSecondTimer;
@@ -147,6 +148,8 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
   void dispose() {
     _pollingSecondTimer?.cancel();
     _positionStream?.cancel();
+    _mapMoveController?.dispose();
+    _mapMoveController = null;
     _mapController.dispose();
     super.dispose();
   }
@@ -164,10 +167,12 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     );
     final zoomTween = Tween<double>(begin: camera.zoom, end: zoom);
 
+    _mapMoveController?.dispose();
     final controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 450),
     );
+    _mapMoveController = controller;
     final animation = CurvedAnimation(
       parent: controller,
       curve: Curves.easeInOutCubic,
@@ -182,8 +187,10 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
     });
 
     controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed ||
-          status == AnimationStatus.dismissed) {
+      if (status == AnimationStatus.completed) {
+        if (_mapMoveController == controller) {
+          _mapMoveController = null;
+        }
         controller.dispose();
       }
     });
@@ -436,6 +443,9 @@ class _LineMapDetailsScreenState extends ConsumerState<LineMapDetailsScreen>
 
     return BackButtonListener(
       onBackButtonPressed: () async {
+        if (ModalRoute.of(context)?.isCurrent == false) {
+          return false;
+        }
         if (_selectedTabIndex == 0 && _selectedStop != null) {
           setState(() => _selectedStop = null);
           return true;

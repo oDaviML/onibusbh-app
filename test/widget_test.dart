@@ -1,21 +1,34 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:onibusbh/core/router/app_router.dart';
+import 'package:onibusbh/core/theme/app_theme.dart';
 import 'package:onibusbh/data/models/direction_variants_dto.dart';
 import 'package:onibusbh/data/models/github_release.dart';
 import 'package:onibusbh/data/models/line_direction_dto.dart';
 import 'package:onibusbh/data/models/line_summary_dto.dart';
 import 'package:onibusbh/data/models/line_timetable_dto.dart';
 import 'package:onibusbh/data/models/line_variant_dto.dart';
+import 'package:onibusbh/data/models/prediction_response_dto.dart';
+import 'package:onibusbh/data/models/shape_dto.dart';
 import 'package:onibusbh/data/models/stop_dto.dart';
 import 'package:onibusbh/data/models/vehicle_position_dto.dart';
 import 'package:onibusbh/data/providers/favorites_providers.dart';
 import 'package:onibusbh/data/providers/line_providers.dart';
+import 'package:onibusbh/data/providers/stop_providers.dart';
+import 'package:onibusbh/data/providers/update_providers.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_card.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_itinerary_view.dart';
 import 'package:onibusbh/ui/features/lines/widgets/line_timetable_view.dart';
+import 'package:onibusbh/ui/features/stops/screens/stop_tracking_screen.dart';
 import 'package:onibusbh/ui/widgets/live_pulse_countdown_badge.dart';
+import 'package:onibusbh/ui/widgets/markers/cluster_marker.dart';
+import 'package:onibusbh/ui/widgets/markers/stop_marker.dart';
+import 'package:onibusbh/ui/widgets/markers/vehicle_marker.dart';
 import 'package:onibusbh/ui/widgets/update_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -521,6 +534,360 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(popCount, 1);
+      },
+    );
+  });
+
+  group('Favorites navigation preservation', () {
+    testWidgets(
+      'opening a favorite line details and going back stays on Favoritos tab',
+      (tester) async {
+        tester.view.physicalSize = const Size(412, 915);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        const favLine = LineSummaryDto(
+          routeId: '4108',
+          shortName: '4108',
+          longName: 'Pedro II/Mangabeiras',
+          color: '0A2E4D',
+          system: 'BHTRANS',
+          directions: [
+            LineDirectionDto(
+              directionId: 0,
+              headsign: 'Estação Ponto São Jose',
+            ),
+          ],
+        );
+
+        SharedPreferences.setMockInitialValues({
+          'favorite_lines_v2': [jsonEncode(favLine.toJson())],
+        });
+        final prefs = await SharedPreferences.getInstance();
+
+        const variants = [
+          DirectionVariantsDto(
+            directionId: 0,
+            headsign: 'Estação Ponto São Jose',
+            variants: [
+              LineVariantDto(
+                variantLabel: 'PRINCIPAL',
+                headsign: 'Estação Ponto São Jose',
+                vehicleCount: 2,
+                tripId: 'trip_4108_0',
+              ),
+            ],
+          ),
+        ];
+
+        AppRouter.router.go('/lines');
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              updateCheckProvider.overrideWith((ref) async => null),
+              linesProvider(null).overrideWith((ref) async => [favLine]),
+              lineVariantsProvider('4108').overrideWith((ref) async => variants),
+              lineShapeProvider((
+                lineId: '4108',
+                tripId: 'trip_4108_0',
+              )).overrideWith(
+                (ref) async => const ShapeDto(
+                  shapeId: 's1',
+                  path: [LatLng(-19.92, -43.93), LatLng(-19.93, -43.94)],
+                ),
+              ),
+              lineStopsProvider((
+                lineId: '4108',
+                tripId: 'trip_4108_0',
+              )).overrideWith((ref) async => const []),
+              lineVehiclesProvider((
+                lineId: '4108',
+                tripId: 'trip_4108_0',
+              )).overrideWith((ref) async => const []),
+              lineTimetableProvider('4108').overrideWith(
+                (ref) async => const LineTimetableDto(
+                  routeId: '4108',
+                  shortName: '4108',
+                  longName: 'Pedro II/Mangabeiras',
+                ),
+              ),
+            ],
+            child: MaterialApp.router(
+              theme: AppTheme.light,
+              routerConfig: AppRouter.router,
+            ),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.byIcon(Icons.favorite).last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.text('Favoritos'), findsOneWidget);
+        expect(find.text('Linhas Salvas'), findsOneWidget);
+
+        await tester.tap(find.text('4108'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.text('Mapa').first);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+
+        expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+
+        expect(find.text('Favoritos'), findsOneWidget);
+        expect(find.text('Linhas Salvas'), findsOneWidget);
+        expect(find.text('Ônibus BH'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'opening a favorite stop and tracking screen returns to Favoritos drawer and closes drawer on back',
+      (tester) async {
+        tester.view.physicalSize = const Size(412, 915);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        const favStop = StopDto(
+          id: 'stop_fav_1',
+          name: 'Av. Afonso Pena, 1200',
+          latitude: -19.921,
+          longitude: -43.938,
+        );
+        const prediction = PredictionResponseDto(
+          routeId: '4108',
+          shortName: '4108',
+          longName: 'Pedro II/Mangabeiras',
+          direction: 0,
+          arrivals: [
+            ArrivalPredictionDto(
+              etaMinutes: 5,
+              vehicleId: '20541',
+              variantLabel: 'PRINCIPAL',
+            ),
+          ],
+        );
+
+        SharedPreferences.setMockInitialValues({
+          'favorite_stops_v1': [jsonEncode(favStop.toJson())],
+        });
+        final prefs = await SharedPreferences.getInstance();
+
+        AppRouter.router.go('/lines');
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              updateCheckProvider.overrideWith((ref) async => null),
+              linesProvider(null).overrideWith((ref) async => const []),
+              stopPredictionsProvider('stop_fav_1').overrideWith(
+                (ref) async => const [prediction],
+              ),
+              lineVariantsProvider('4108').overrideWith(
+                (ref) async => const [
+                  DirectionVariantsDto(
+                    directionId: 0,
+                    headsign: 'Centro',
+                    variants: [
+                      LineVariantDto(
+                        variantLabel: 'PRINCIPAL',
+                        tripId: 't_main',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              lineShapeProvider((
+                lineId: '4108',
+                tripId: 't_main',
+              )).overrideWith(
+                (ref) async => const ShapeDto(shapeId: 'sh1', path: []),
+              ),
+              lineVehiclesProvider((
+                lineId: '4108',
+                tripId: null,
+              )).overrideWith((ref) async => const []),
+            ],
+            child: MaterialApp.router(
+              theme: AppTheme.light,
+              routerConfig: AppRouter.router,
+            ),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.byIcon(Icons.favorite).last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.text('Paradas Salvas'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.text('Av. Afonso Pena, 1200'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(find.text('DETALHES DA PARADA'), findsOneWidget);
+
+        await tester.tap(find.text('4108'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 450));
+        await tester.pump(const Duration(milliseconds: 450));
+
+        expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(find.text('DETALHES DA PARADA'), findsOneWidget);
+        expect(find.text('Favoritos'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(find.text('DETALHES DA PARADA'), findsNothing);
+        expect(find.text('Favoritos'), findsOneWidget);
+        expect(find.text('Paradas Salvas'), findsOneWidget);
+        expect(find.text('Ônibus BH'), findsNothing);
+      },
+    );
+  });
+
+  group('StopTrackingScreen vehicle label', () {
+    testWidgets(
+      'displays Carro vehicle number instead of Principal on vehicle marker tap',
+      (tester) async {
+        const stop = StopDto(
+          id: 'stop_1',
+          name: 'Av. Afonso Pena, 1000',
+          latitude: -19.921,
+          longitude: -43.938,
+        );
+        const prediction = PredictionResponseDto(
+          routeId: '4108',
+          shortName: '4108',
+          longName: 'Pedro II/Mangabeiras',
+          direction: 0,
+          arrivals: [
+            ArrivalPredictionDto(
+              etaMinutes: 4,
+              vehicleId: '20541',
+              variantLabel: 'PRINCIPAL',
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              lineVariantsProvider('4108').overrideWith(
+                (ref) async => const [
+                  DirectionVariantsDto(
+                    directionId: 0,
+                    headsign: 'Centro',
+                    variants: [
+                      LineVariantDto(
+                        variantLabel: 'PRINCIPAL',
+                        tripId: 't_main',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              lineShapeProvider((
+                lineId: '4108',
+                tripId: 't_main',
+              )).overrideWith(
+                (ref) async => const ShapeDto(shapeId: 'sh1', path: []),
+              ),
+              lineVehiclesProvider((
+                lineId: '4108',
+                tripId: null,
+              )).overrideWith(
+                (ref) async => const [
+                  VehiclePositionDto(
+                    vehicleId: '20541',
+                    latitude: -19.9215,
+                    longitude: -43.9385,
+                    bearing: 90,
+                    directionId: 0,
+                    variantLabel: 'PRINCIPAL',
+                  ),
+                ],
+              ),
+              stopPredictionsProvider('stop_1').overrideWith(
+                (ref) async => const [prediction],
+              ),
+            ],
+            child: const MaterialApp(
+              home: StopTrackingScreen(stop: stop, prediction: prediction),
+            ),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final markerFinder = find.byType(VehicleMarker);
+        expect(markerFinder, findsOneWidget);
+
+        await tester.tap(markerFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('Carro 20541'), findsOneWidget);
+        expect(find.text('Principal'), findsNothing);
+      },
+    );
+  });
+
+  group('StopMarker and ClusterMarker', () {
+    testWidgets(
+      'renders all StopMarker modes and ClusterMarker cleanly without overflow',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  StopMarker(isDark: false, compact: true),
+                  SizedBox(width: 8),
+                  StopMarker(isDark: false),
+                  SizedBox(width: 8),
+                  StopMarker(isDark: true, isSelected: true),
+                  SizedBox(width: 8),
+                  StopMarker(isDark: false, badgeNumber: 2),
+                  SizedBox(width: 8),
+                  ClusterMarker(count: 6, isDark: false),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('2'), findsOneWidget);
+        expect(find.text('6'), findsOneWidget);
+        expect(tester.takeException(), isNull);
       },
     );
   });

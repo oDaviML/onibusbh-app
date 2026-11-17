@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../data/models/stop_dto.dart';
@@ -54,13 +55,13 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
       _selectedStop = stop;
     });
     ScaffoldWithNavBar.forceHide.value = true;
-    _drawerAnimController.forward();
+    _drawerAnimController.forward(from: 0);
   }
 
   void _closeDrawer() {
     ScaffoldWithNavBar.forceHide.value = false;
     _drawerAnimController.reverse().then((_) {
-      if (mounted) {
+      if (mounted && _drawerAnimController.isDismissed) {
         setState(() {
           _selectedStop = null;
         });
@@ -72,16 +73,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     final stop = _selectedStop;
     if (stop == null) return;
 
-    ScaffoldWithNavBar.forceHide.value = false;
-    _drawerAnimController.reverse().then((_) {
-      if (mounted) {
-        setState(() {
-          _selectedStop = null;
-        });
-      }
-    });
-
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
         reverseTransitionDuration: const Duration(milliseconds: 350),
@@ -105,148 +97,195 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     );
   }
 
+  bool get _isDrawerOpen => _selectedStop != null;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final favoriteLines = ref.watch(favoriteLinesProvider);
     final favoriteStops = ref.watch(favoriteStopsProvider);
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 16.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Favoritos',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.displayLarge,
+    final popContent = PopScope(
+      canPop: !_isDrawerOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isDrawerOpen) {
+          _closeDrawer();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
+        body: Stack(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 16.0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Favoritos',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.displayLarge,
+                                    ),
+                                    Text(
+                                      'Suas rotas e paradas frequentes',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'Suas rotas e paradas frequentes',
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(width: 12),
+                              const ThemeToggleButton(),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.slate800.withValues(alpha: 0.5)
+                                  : AppColors.slate200.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _TabButton(
+                                    label: 'Linhas Salvas',
+                                    isActive: _selectedTabIndex == 0,
+                                    onTap: () =>
+                                        setState(() => _selectedTabIndex = 0),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _TabButton(
+                                    label: 'Paradas Salvas',
+                                    isActive: _selectedTabIndex == 1,
+                                    onTap: () =>
+                                        setState(() => _selectedTabIndex = 1),
+                                  ),
                                 ),
                               ],
                             ),
-                            const ThemeToggleButton(),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.slate800.withValues(alpha: 0.5)
-                                : AppColors.slate200.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _TabButton(
-                                  label: 'Linhas Salvas',
-                                  isActive: _selectedTabIndex == 0,
-                                  onTap: () =>
-                                      setState(() => _selectedTabIndex = 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (_selectedTabIndex == 0) ...[
+                          if (favoriteLines.isEmpty)
+                            _buildEmptyState('Nenhuma linha salva')
+                          else
+                            ...favoriteLines.map(
+                              (line) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: LineCard(line: line),
+                              ),
+                            ),
+                        ] else ...[
+                          const SizedBox(height: 16),
+                          if (favoriteStops.isEmpty)
+                            _buildEmptyState('Nenhuma parada salva')
+                          else
+                            ...favoriteStops.map(
+                              (stop) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: GestureDetector(
+                                  onTap: () => _onStopTapped(stop),
+                                  child: _buildStopCard(context, stop),
                                 ),
                               ),
-                              Expanded(
-                                child: _TabButton(
-                                  label: 'Paradas Salvas',
-                                  isActive: _selectedTabIndex == 1,
-                                  onTap: () =>
-                                      setState(() => _selectedTabIndex = 1),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                        ],
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_selectedStop != null)
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: _closeDrawer,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            if (_selectedStop != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SlideTransition(
+                  position: _drawerSlideAnimation,
+                  child: GestureDetector(
+                    onTap: () {},
+                    onVerticalDragEnd: (details) {
+                      if ((details.primaryVelocity ?? 0) > 250) {
+                        _closeDrawer();
+                      }
+                    },
+                    child: StopDetailsDrawer(
+                      key: ValueKey(_selectedStop!.id),
+                      stop: _selectedStop!,
+                      onOpenTracking: _onOpenTracking,
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      if (_selectedTabIndex == 0) ...[
-                        if (favoriteLines.isEmpty)
-                          _buildEmptyState('Nenhuma linha salva')
-                        else
-                          ...favoriteLines.map(
-                            (line) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: LineCard(line: line),
-                            ),
-                          ),
-                      ] else ...[
-                        const SizedBox(height: 16),
-                        if (favoriteStops.isEmpty)
-                          _buildEmptyState('Nenhuma parada salva')
-                        else
-                          ...favoriteStops.map(
-                            (stop) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: GestureDetector(
-                                onTap: () => _onStopTapped(stop),
-                                child: _buildStopCard(context, stop),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_selectedStop != null)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _closeDrawer,
-                child: const SizedBox.expand(),
               ),
-            ),
-          if (_selectedStop != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SlideTransition(
-                position: _drawerSlideAnimation,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: StopDetailsDrawer(
-                    key: ValueKey(_selectedStop!.id),
-                    stop: _selectedStop!,
-                    onOpenTracking: _onOpenTracking,
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
+    );
+
+    if (Router.maybeOf(context) == null) {
+      return popContent;
+    }
+
+    return BackButtonListener(
+      onBackButtonPressed: () async {
+        final shell = StatefulNavigationShell.maybeOf(context);
+        if (shell != null && shell.currentIndex != 2) {
+          return false;
+        }
+        final rootNav = Navigator.maybeOf(context, rootNavigator: true);
+        if (rootNav != null && rootNav.canPop()) {
+          return false;
+        }
+        final branchNav = Navigator.maybeOf(context);
+        if (branchNav != null && branchNav != rootNav && branchNav.canPop()) {
+          return false;
+        }
+        if (_isDrawerOpen) {
+          _closeDrawer();
+          return true;
+        }
+        return false;
+      },
+      child: popContent,
     );
   }
 

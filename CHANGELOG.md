@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.3] - 2026-11-17
+
+### Features
+
+- Redesenhar marcadores de parada e pílulas de cluster no mapa global sem spiderfy, com zoom inteligente e seletor numerado para pontos próximos ou sobrepostos
+- Adicionar botão de voltar no cabeçalho do acompanhamento do ônibus por parada
+
+### Bug Fixes
+
+- Preservar a aba Favoritos ao abrir e voltar de detalhes de linhas ou paradas salvas (incluindo fechamento da gaveta pelo botão Voltar)
+- Exibir o número/prefixo do veículo (`Carro <número>`) em vez de `Principal` ao tocar no ônibus no mapa por parada
+- Corrigir vazamento de ticker nas animações de câmera dos mapas e alinhamento do cabeçalho na tela de Favoritos
+
 ## [2.2.2] - 2026-11-15
 
 ### Bug Fixes

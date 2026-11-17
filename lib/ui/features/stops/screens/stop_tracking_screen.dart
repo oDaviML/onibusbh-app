@@ -16,7 +16,6 @@ import '../../../../data/models/vehicle_position_dto.dart';
 import '../../../../data/providers/line_providers.dart';
 import '../../../../data/providers/stop_providers.dart';
 import '../../../widgets/markers/stop_marker.dart';
-import '../../../../data/models/line_variant_dto.dart';
 import '../../../widgets/markers/vehicle_marker.dart';
 import '../../../widgets/markers/user_location_marker.dart';
 import '../../../widgets/live_pulse_countdown_badge.dart';
@@ -43,6 +42,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   static const int _refreshIntervalSeconds = 10;
 
   final MapController _mapController = MapController();
+  AnimationController? _mapMoveController;
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStream;
   Timer? _pollingSecondTimer;
@@ -135,6 +135,8 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   void dispose() {
     _pollingSecondTimer?.cancel();
     _positionStream?.cancel();
+    _mapMoveController?.dispose();
+    _mapMoveController = null;
     _mapController.dispose();
     _bubblesAnimController.dispose();
     _controlsAnimController.dispose();
@@ -142,6 +144,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
   }
 
   void _animateMapTo(LatLng target, double zoom) {
+    if (!mounted) return;
     final camera = _mapController.camera;
     final latTween = Tween<double>(
       begin: camera.center.latitude,
@@ -153,16 +156,19 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
     );
     final zoomTween = Tween<double>(begin: camera.zoom, end: zoom);
 
+    _mapMoveController?.dispose();
     final controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
+    _mapMoveController = controller;
     final animation = CurvedAnimation(
       parent: controller,
       curve: Curves.easeInOutCubic,
     );
 
     controller.addListener(() {
+      if (!mounted) return;
       _mapController.move(
         LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
         zoomTween.evaluate(animation),
@@ -171,6 +177,9 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
 
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
+        if (_mapMoveController == controller) {
+          _mapMoveController = null;
+        }
         controller.dispose();
       }
     });
@@ -258,6 +267,16 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
       );
     }
     return fallback;
+  }
+
+  String _vehicleLabel(VehiclePositionDto v) {
+    final cleaned = v.vehicleId
+        .replaceFirst(RegExp(r'^otimo_', caseSensitive: false), '')
+        .trim();
+    if (cleaned.isNotEmpty && !cleaned.startsWith('pred_')) {
+      return 'Carro $cleaned';
+    }
+    return 'Linha ${widget.prediction.shortName}';
   }
 
   void _fitStopAndClosestVehicle(List<VehiclePositionDto> vehicles) {
@@ -419,9 +438,7 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                           color: routeColor,
                           bearing: v.bearing.toDouble(),
                           isDark: isDark,
-                          label: v.variantLabel != null
-                              ? LineVariantDto.formatLabel(v.variantLabel!)
-                              : null,
+                          label: _vehicleLabel(v),
                         ),
                       ),
                     ),
@@ -466,6 +483,26 @@ class _StopTrackingScreenState extends ConsumerState<StopTrackingScreen>
                 ),
                 child: Row(
                   children: [
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.slate800
+                              : AppColors.slate100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          size: 18,
+                          color: isDark ? Colors.white : AppColors.slate900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Container(
                       width: 36,
                       height: 36,

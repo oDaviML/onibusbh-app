@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/models/line_summary_dto.dart';
@@ -8,7 +9,10 @@ import '../../ui/features/favorites/screens/favorites_screen.dart';
 import '../../ui/widgets/scaffold_with_nav_bar.dart';
 
 class AppRouter {
+  static final rootNavigatorKey = GlobalKey<NavigatorState>();
+
   static final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/lines',
     routes: [
       StatefulShellRoute.indexedStack(
@@ -21,26 +25,6 @@ class AppRouter {
               GoRoute(
                 path: '/lines',
                 builder: (context, state) => const LineDirectoryScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'details',
-                    builder: (context, state) {
-                      final extra = state.extra as Map<String, dynamic>;
-                      final line = extra['line'] as LineSummaryDto;
-                      final tripId = extra['tripId'] as String;
-                      final direction = extra['direction'] as int? ?? 0;
-                      final variantLabel = extra['variantLabel'] as String;
-                      final initialTabIndex = extra['initialTabIndex'] as int? ?? 0;
-                      return LineMapDetailsScreen(
-                        line: line,
-                        tripId: tripId,
-                        direction: direction,
-                        variantLabel: variantLabel,
-                        initialTabIndex: initialTabIndex,
-                      );
-                    },
-                  ),
-                ],
               ),
             ],
           ),
@@ -63,6 +47,25 @@ class AppRouter {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/lines/details',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          final line = extra['line'] as LineSummaryDto;
+          final tripId = extra['tripId'] as String;
+          final direction = extra['direction'] as int? ?? 0;
+          final variantLabel = extra['variantLabel'] as String;
+          final initialTabIndex = extra['initialTabIndex'] as int? ?? 0;
+          return LineMapDetailsScreen(
+            line: line,
+            tripId: tripId,
+            direction: direction,
+            variantLabel: variantLabel,
+            initialTabIndex: initialTabIndex,
+          );
+        },
       ),
     ],
   );

@@ -52,7 +52,7 @@ class _LineCardState extends ConsumerState<LineCard>
     LineVariantDto variant, {
     int initialTabIndex = 0,
   }) {
-    context.go('/lines/details', extra: {
+    context.push('/lines/details', extra: {
       'line': widget.line,
       'tripId': variant.tripId ?? '',
       'direction': directionId,
